@@ -35,6 +35,7 @@ export default function AuthLayout({
                     src="/images/logo/auth-logo.svg"
                     alt="Logo"
                     className="drop-shadow-xl"
+                    style={{ height: "auto" }}
                   />
                 </Link>
                 <h2 className="text-2xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">

@@ -6,10 +6,36 @@ import Button from "@/components/ui/button/Button";
 import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from "@/icons";
 import Link from "next/link";
 import React, { useState } from "react";
+import api from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 
 export default function SignInForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  
+  const { login } = useAuth();
+  const router = useRouter();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    try {
+      const response = await api.post("/auth/login", { email, password });
+      login(response.data.user, response.data.token);
+      router.push("/");
+    } catch (err: any) {
+      setError(err.response?.data?.error || "Login failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="w-full max-w-md mx-auto">
@@ -29,7 +55,14 @@ export default function SignInForm() {
         </p>
       </div>
 
+      {error && (
+        <div className="mb-4 p-3 rounded-lg bg-red-50 text-red-500 text-sm font-medium border border-red-100">
+          {error}
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-4 mb-8">
+        {/* ... existing social buttons ... */}
         <button className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-white/5 transition-all duration-200 font-medium text-sm text-gray-700 dark:text-gray-300">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M18.7511 10.1944C18.7511 9.47495 18.6915 8.94995 18.5626 8.40552H10.1797V11.6527H15.1003C15.0011 12.4597 14.4654 13.675 13.2749 14.4916L13.2582 14.6003L15.9087 16.6126L16.0924 16.6305C17.7788 15.1041 18.7511 12.8583 18.7511 10.1944Z" fill="#4285F4"/>
@@ -56,10 +89,16 @@ export default function SignInForm() {
         </div>
       </div>
 
-      <form className="space-y-5">
+      <form className="space-y-5" onSubmit={handleSubmit}>
         <div>
           <Label>Email Address</Label>
-          <Input placeholder="name@company.com" type="email" />
+          <Input 
+            placeholder="name@company.com" 
+            type="email" 
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
         </div>
         <div>
           <div className="flex items-center justify-between mb-2">
@@ -75,6 +114,9 @@ export default function SignInForm() {
             <Input
               type={showPassword ? "text" : "password"}
               placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
             />
             <button
               type="button"
@@ -91,8 +133,12 @@ export default function SignInForm() {
           <span className="text-sm text-gray-600 dark:text-gray-400 font-medium">Keep me logged in</span>
         </div>
 
-        <Button className="w-full h-11 text-base font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-brand-500/20 active:scale-[0.98]">
-          Sign In
+        <Button 
+          type="submit" 
+          disabled={loading}
+          className="w-full h-11 text-base font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-brand-500/20 active:scale-[0.98]"
+        >
+          {loading ? "Signing In..." : "Sign In"}
         </Button>
       </form>
 
