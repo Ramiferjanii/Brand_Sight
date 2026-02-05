@@ -3,6 +3,7 @@ import LandingHero from "@/components/landing/LandingHero";
 import LandingFeatures from "@/components/landing/LandingFeatures";
 import LandingTestimonials from "@/components/landing/LandingTestimonials";
 import { Metadata } from "next";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "BrandSight | The Ultimate Web Scraping Platform",
@@ -15,7 +16,7 @@ export default function LandingPage() {
       <LandingHero />
       <LandingFeatures />
       <LandingTestimonials />
-      
+
       {/* Additional Content Section */}
       <section className="py-24 overflow-hidden">
         <div className="container mx-auto px-4 md:px-6">
@@ -29,7 +30,7 @@ export default function LandingPage() {
                 BrandSight helps companies monitor their brand performance in real-time using open source data. 
                 Visualize sentiment trends, keyword mentions, and engagement metrics to understand your public image.
               </p>
-              
+
               <ul className="space-y-4">
                 {[
                   "Real-time text data collection",
@@ -48,21 +49,21 @@ export default function LandingPage() {
                 ))}
               </ul>
             </div>
-            
+
             <div className="flex-1 relative">
-                <div className="absolute inset-0 bg-brand-500/20 blur-[100px] -z-10" />
-                <div className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 md:p-10 shadow-xl">
-                   <div className="space-y-6">
-                      <div className="h-4 w-1/3 bg-gray-100 dark:bg-gray-800 rounded-full" />
-                      <div className="h-4 w-full bg-gray-100 dark:bg-gray-800 rounded-full" />
-                      <div className="h-4 w-2/3 bg-gray-100 dark:bg-gray-800 rounded-full" />
-                      <div className="pt-4 grid grid-cols-2 gap-4">
-                        <div className="h-24 bg-brand-50 dark:bg-brand-500/10 rounded-2xl border border-brand-100 dark:border-brand-500/20" />
-                        <div className="h-24 bg-purple-50 dark:bg-purple-500/10 rounded-2xl border border-purple-100 dark:border-purple-500/20" />
-                      </div>
-                      <div className="h-4 w-full bg-gray-100 dark:bg-gray-800 rounded-full" />
-                   </div>
+              <div className="absolute inset-0 bg-brand-500/20 blur-[100px] -z-10" />
+              <div className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 md:p-10 shadow-xl">
+                <div className="space-y-6">
+                  <div className="h-4 w-1/3 bg-gray-100 dark:bg-gray-800 rounded-full" />
+                  <div className="h-4 w-full bg-gray-100 dark:bg-gray-800 rounded-full" />
+                  <div className="h-4 w-2/3 bg-gray-100 dark:bg-gray-800 rounded-full" />
+                  <div className="pt-4 grid grid-cols-2 gap-4">
+                    <div className="h-24 bg-brand-50 dark:bg-brand-500/10 rounded-2xl border border-brand-100 dark:border-brand-500/20" />
+                    <div className="h-24 bg-purple-50 dark:bg-purple-500/10 rounded-2xl border border-purple-100 dark:border-purple-500/20" />
+                  </div>
+                  <div className="h-4 w-full bg-gray-100 dark:bg-gray-800 rounded-full" />
                 </div>
+              </div>
             </div>
           </div>
         </div>
@@ -74,7 +75,7 @@ export default function LandingPage() {
           <div className="max-w-4xl mx-auto rounded-[2rem] bg-brand-950 p-12 lg:p-20 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-64 h-64 bg-brand-500/20 blur-[100px] rounded-full" />
             <div className="absolute bottom-0 left-0 w-64 h-64 bg-purple-500/20 blur-[100px] rounded-full" />
-            
+
             <div className="relative z-10">
               <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">
                 Ready to understand your brand's impact?
@@ -83,12 +84,16 @@ export default function LandingPage() {
                 Join teams using BrandSight to power their business intelligence.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                 <button className="h-12 px-8 rounded-lg bg-brand-500 text-white font-bold hover:bg-brand-600 transition-all shadow-lg shadow-brand-500/25">
-                   Get Started for Free
-                 </button>
-                 <button className="h-12 px-8 rounded-lg bg-white/10 text-white font-bold hover:bg-white/20 transition-all backdrop-blur-md border border-white/10">
-                   Schedule a Demo
-                 </button>
+                <Link href="/signup">
+                  <button className="h-12 px-8 rounded-lg bg-brand-500 text-white font-bold hover:bg-brand-600 transition-all shadow-lg shadow-brand-500/25">
+                    Get Started for Free
+                  </button>
+                </Link>
+                <Link href="/signin">
+                  <button className="h-12 px-8 rounded-lg bg-white/10 text-white font-bold hover:bg-white/20 transition-all backdrop-blur-md border border-white/10">
+                    Sign In instead
+                  </button>
+                </Link>
               </div>
             </div>
           </div>
