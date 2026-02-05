@@ -28,7 +28,7 @@ export default function LandingPage() {
               </h2>
               <p className="text-lg text-gray-600 dark:text-gray-400 mb-8 leading-relaxed">
                 BrandSight helps companies monitor their brand performance in real-time using open source data. 
-                Visualize sentiment trends, keyword mentions, and engagement metrics to understand your public image.
+                Visualize sentiment trends, keyword mentions, and engagement metrics to understand your public image.     
               </p>
 
               <ul className="space-y-4">

@@ -19,37 +19,56 @@ export default function AuthLayoutWrapper({
   return (
     <div className="relative p-6 bg-white z-1 dark:bg-gray-900 sm:p-0">
       <ThemeProvider>
-        <div className="relative flex lg:flex-row w-full h-screen justify-center flex-col dark:bg-gray-900 sm:p-0 overflow-hidden">
+        {/* Main Flex Container */}
+        <motion.div 
+           className="relative flex lg:flex-row w-full h-screen justify-center flex-col dark:bg-gray-900 sm:p-0 overflow-hidden"
+           initial={false} // Disable initial animation on first load
+        >
           
-          <AnimatePresence mode="wait">
-            {/* Banner/Brand Side */}
-            {/* Banner/Brand Side */}
-            <motion.div
-              key={isSignUp ? "banner-signup" : "banner-signin"}
-              layout
-              initial={{ opacity: 0, x: isSignUp ? -20 : 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: isSignUp ? 20 : -20 }}
-              transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className={`lg:w-1/2 w-full h-full lg:grid items-center hidden relative overflow-hidden order-last ${isSignUp ? 'lg:order-first' : 'lg:order-last'}`}
-            >
-               <BrandBanner isSignUp={isSignUp} />
-            </motion.div>
+          {/* Banner/Brand Side */}
+          {/* We keep the key STABLE so Framer Motion slides it instead of remounting it */}
+          <motion.div
+            layout
+            key="auth-banner-panel" 
+            transition={{ type: "spring", stiffness: 200, damping: 25, mass: 1 }}
+            className={`lg:w-1/2 w-full h-full lg:grid items-center hidden relative overflow-hidden ${
+              isSignUp ? 'lg:order-first' : 'lg:order-last'
+            }`}
+          >
+             <BrandBanner isSignUp={isSignUp} />
+          </motion.div>
 
-            {/* Form Side */}
-            <motion.div 
-               key={isSignUp ? "form-signup" : "form-signin"}
-               layout
-               className={`flex-1 flex flex-col justify-center px-4 sm:px-12 lg:px-20 xl:px-32 z-10 ${isSignUp ? 'lg:order-last' : 'lg:order-first'}`}
-            >
-              {children}
-            </motion.div>
-          </AnimatePresence>
+          {/* Form Side */}
+          <motion.div 
+             layout
+             key="auth-form-panel"
+             transition={{ type: "spring", stiffness: 200, damping: 25, mass: 1 }}
+             className={`flex-1 flex flex-col justify-center px-4 sm:px-12 lg:px-20 xl:px-32 z-10 bg-white dark:bg-gray-900 ${
+               isSignUp ? 'lg:order-last' : 'lg:order-first'
+             }`}
+          >
+             {/* 
+                The children (Form content) change, but we want the CONTAINER to slide. 
+                We use a simple fade for the content change to decouple it from the slide.
+             */}
+             <AnimatePresence mode="wait">
+                <motion.div
+                  key={isSignUp ? "signup-form" : "signin-form"}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.2 }}
+                  className="w-full"
+                >
+                  {children}
+                </motion.div>
+             </AnimatePresence>
+          </motion.div>
 
           <div className="fixed bottom-6 right-6 z-50 hidden sm:block">
             <ThemeTogglerTwo />
           </div>
-        </div>
+        </motion.div>
       </ThemeProvider>
     </div>
   );
