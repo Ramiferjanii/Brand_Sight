@@ -4,23 +4,38 @@ import ComponentCard from "@/components/common/ComponentCard";
 import Button from "@/components/ui/button/Button";
 import { DownloadIcon } from "@/icons";
 
-const mockResults = [
-  { id: 1, title: "iPhone 15 Pro", price: "$999", source: "Amazon", status: "Success", date: "2024-05-20" },
-  { id: 2, title: "Samsung Galaxy S24", price: "$899", source: "eBay", status: "Success", date: "2024-05-21" },
-  { id: 3, title: "MacBook Air M3", price: "$1099", source: "BestBuy", status: "Success", date: "2024-05-22" },
-  { id: 4, title: "Sony WH-1000XM5", price: "$348", source: "Amazon", status: "Error", date: "2024-05-22" },
-];
-
 const ScrapingResults: React.FC = () => {
+  const [results, setResults] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  const filteredResults = mockResults.filter(item => 
-    item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.source.toLowerCase().includes(searchTerm.toLowerCase())
+  const fetchResults = async () => {
+    try {
+        const res = await fetch("http://localhost:5000/api/websites");
+        const data = await res.json();
+        setResults(data.websites || []);
+    } catch (error) {
+        console.error("Failed to fetch results", error);
+    } finally {
+        setLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchResults();
+    // Optional: Auto-refresh every 10 seconds to show updates
+    const interval = setInterval(fetchResults, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const filteredResults = results.filter(item => 
+    (item.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (item.url || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (item.scrapedData?.title || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
-    <ComponentCard title="Scraping Results" desc="View and export your extracted data.">
+    <ComponentCard title="Scraping Results" desc="View extracted data from your configured websites.">
       <div className="space-y-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="relative w-full md:w-80">
@@ -51,9 +66,6 @@ const ScrapingResults: React.FC = () => {
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" startIcon={<DownloadIcon />}>
-              Export CSV
-            </Button>
-            <Button variant="outline" size="sm" startIcon={<DownloadIcon />}>
               Export JSON
             </Button>
           </div>
@@ -63,31 +75,40 @@ const ScrapingResults: React.FC = () => {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-gray-100 dark:border-gray-800">
-                <th className="px-4 py-3 text-sm font-medium text-gray-500 uppercase tracking-wider">Product Name</th>
-                <th className="px-4 py-3 text-sm font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                <th className="px-4 py-3 text-sm font-medium text-gray-500 uppercase tracking-wider">Source</th>
-                <th className="px-4 py-3 text-sm font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th className="px-4 py-3 text-sm font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                <th className="px-4 py-3 text-sm font-medium text-gray-500 uppercase tracking-wider">Website Name</th>
+                <th className="px-4 py-3 text-sm font-medium text-gray-500 uppercase tracking-wider">Scraped Title</th>
+                <th className="px-4 py-3 text-sm font-medium text-gray-500 uppercase tracking-wider">Links Found</th>
+                <th className="px-4 py-3 text-sm font-medium text-gray-500 uppercase tracking-wider">Images Found</th>
+                <th className="px-4 py-3 text-sm font-medium text-gray-500 uppercase tracking-wider">Last Scrape</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-              {filteredResults.map((item) => (
-                <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-white/[0.02] transition">
-                  <td className="px-4 py-4 text-sm text-gray-800 dark:text-gray-200">{item.title}</td>
-                  <td className="px-4 py-4 text-sm text-gray-800 dark:text-gray-200">{item.price}</td>
-                  <td className="px-4 py-4 text-sm text-gray-800 dark:text-gray-200">{item.source}</td>
-                  <td className="px-4 py-4 text-sm">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                      item.status === 'Success' 
-                        ? 'bg-green-100 text-green-700 dark:bg-green-500/10 dark:text-green-400' 
-                        : 'bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400'
-                    }`}>
-                      {item.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-4 text-sm text-gray-500">{item.date}</td>
-                </tr>
-              ))}
+              {loading ? (
+                  <tr><td colSpan={5} className="px-4 py-4 text-center text-sm text-gray-500">Loading results...</td></tr>
+              ) : filteredResults.length === 0 ? (
+                  <tr><td colSpan={5} className="px-4 py-4 text-center text-sm text-gray-500">No results found (Try triggering a scrape!)</td></tr>
+              ) : (
+                filteredResults.map((item) => (
+                    <tr key={item._id} className="hover:bg-gray-50 dark:hover:bg-white/[0.02] transition">
+                    <td className="px-4 py-4 text-sm font-medium text-gray-800 dark:text-gray-200">
+                        {item.name}
+                        <div className="text-xs text-gray-400 font-normal">{item.url}</div>
+                    </td>
+                    <td className="px-4 py-4 text-sm text-gray-600 dark:text-gray-400 max-w-xs truncate" title={item.scrapedData?.title}>
+                        {item.scrapedData?.title || "No data yet"}
+                    </td>
+                    <td className="px-4 py-4 text-sm text-gray-800 dark:text-gray-200">
+                        {item.scrapedData?.linksCount || 0}
+                    </td>
+                    <td className="px-4 py-4 text-sm text-gray-800 dark:text-gray-200">
+                        {item.scrapedData?.imagesCount || 0}
+                    </td>
+                    <td className="px-4 py-4 text-sm text-gray-500">
+                        {item.lastScraped ? new Date(item.lastScraped).toLocaleString() : "Never"}
+                    </td>
+                    </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

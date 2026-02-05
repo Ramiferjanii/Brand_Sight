@@ -11,23 +11,23 @@ const LandingFooter: React.FC = () => {
           <div className="col-span-2 lg:col-span-2">
             <Link href="/" className="inline-block mb-6">
               <Image
-                src="/images/logo/logo.svg"
+                src="/images/logo/logo-removebg-preview.png"
                 alt="Logo"
-                width={120}
-                height={32}
+                width={160}
+                height={42}
                 className="dark:hidden"
               />
               <Image
-                src="/images/logo/logo-dark.svg"
+                src="/images/logo/logo-removebg-preview.png"
                 alt="Logo"
-                width={120}
-                height={32}
+                width={160}
+                height={42}
                 className="hidden dark:block"
               />
             </Link>
             <p className="text-gray-500 dark:text-gray-400 max-w-xs mb-8">
-              The premium web scraping platform for modern developers. 
-              Extract data with ease, speed, and reliability.
+              Platform for Real-Time Brand Monitoring. 
+              Understand your public image with ease and speed.
             </p>
           </div>
           
@@ -60,7 +60,7 @@ const LandingFooter: React.FC = () => {
         
         <div className="mt-12 pt-8 border-t border-gray-100 dark:border-gray-800 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-sm text-gray-500">
-            © {new Date().getFullYear()} Premium Scraper. All rights reserved.
+            © {new Date().getFullYear()} BrandSight. All rights reserved.
           </p>
           <div className="flex gap-6">
             <Link href="#" className="text-gray-400 hover:text-brand-500 transition-colors">

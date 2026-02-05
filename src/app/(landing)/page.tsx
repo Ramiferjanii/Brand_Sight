@@ -5,7 +5,7 @@ import LandingTestimonials from "@/components/landing/LandingTestimonials";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Premium Scraper | The Ultimate Web Scraping Platform",
+  title: "BrandSight | The Ultimate Web Scraping Platform",
   description: "Scale your data collection with the most advanced web scraping dashboard. Integrated with Puppeteer, Playwright, and intelligent proxy rotation.",
 };
 
@@ -22,21 +22,20 @@ export default function LandingPage() {
           <div className="flex flex-col lg:flex-row items-center gap-12">
             <div className="flex-1">
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-6">
-                Data extraction at the <br />
-                <span className="text-brand-500">Speed of Thought</span>
+                Brand Performance <br />
+                <span className="text-brand-500">at a Glance</span>
               </h2>
               <p className="text-lg text-gray-600 dark:text-gray-400 mb-8 leading-relaxed">
-                Whether you're tracking prices, monitoring competitors, or building AI datasets, 
-                our platform provides the infrastructure you need to succeed without the headache 
-                of infrastructure management.
+                BrandSight helps companies monitor their brand performance in real-time using open source data. 
+                Visualize sentiment trends, keyword mentions, and engagement metrics to understand your public image.
               </p>
               
               <ul className="space-y-4">
                 {[
-                  "Automatic CAPTCHA solving",
-                  "Global residential proxy network",
-                  "Scheduled scraping tasks",
-                  "Webhooks and API integration"
+                  "Real-time text data collection",
+                  "Sentiment & keyword analysis pipeline",
+                  "Interactive data visualization",
+                  "Performance optimization & caching"
                 ].map((item, i) => (
                   <li key={i} className="flex items-center gap-3 text-gray-700 dark:text-gray-300">
                     <div className="flex-shrink-0 w-5 h-5 rounded-full bg-green-500/10 text-green-500 flex items-center justify-center">
@@ -78,10 +77,10 @@ export default function LandingPage() {
             
             <div className="relative z-10">
               <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">
-                Ready to transform your data workflow?
+                Ready to understand your brand's impact?
               </h2>
               <p className="text-gray-400 text-lg mb-10 max-w-xl mx-auto">
-                Join 500+ companies using Premium Scraper to power their business intelligence.
+                Join teams using BrandSight to power their business intelligence.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
                  <button className="h-12 px-8 rounded-lg bg-brand-500 text-white font-bold hover:bg-brand-600 transition-all shadow-lg shadow-brand-500/25">

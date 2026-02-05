@@ -40,7 +40,10 @@ const navItems: NavItem[] = [
   {
     icon: <PlugInIcon />,
     name: "Scraping",
-    path: "/scraping",
+    subItems: [
+      { name: "Scraping", path: "/scraping", pro: false },
+      { name: "Settings", path: "/scraping/settings", pro: false },
+    ],
   },
   {
     icon: <UserCircleIcon />,
@@ -309,7 +312,7 @@ const AppSidebar: React.FC = () => {
       onMouseLeave={() => setIsHovered(false)}
     >
       <div
-        className={`py-8 flex  ${
+        className={`relative flex items-center py-6 px-6 mb-2 ${
           !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
         }`}
       >
@@ -318,28 +321,30 @@ const AppSidebar: React.FC = () => {
             <>
               <Image
                 className="dark:hidden"
-                src="/images/logo/logo.svg"
+                src="/images/logo/logo-name.svg"  
                 alt="Logo"
                 width={150}
                 height={40}
-                style={{ height: "auto" }}
+                priority
+                style={{ width: "150px", height: "auto" }}
               />
               <Image
                 className="hidden dark:block"
-                src="/images/logo/logo-dark.svg"
+                src="/images/logo/logo-name.svg"
                 alt="Logo"
                 width={150}
                 height={40}
-                style={{ height: "auto" }}
+                priority
+                style={{ width: "150px", height: "auto" }}
               />
             </>
           ) : (
             <Image
-              src="/images/logo/logo-icon.svg"
+              src="/images/logo/logo-icon.png"
               alt="Logo"
               width={32}
               height={32}
-              style={{ height: "auto" }}
+              style={{ width: "32px", height: "auto" }}
             />
           )}
         </Link>

@@ -22,19 +22,24 @@ const LandingNavbar: React.FC = () => {
       <div className="container mx-auto px-4 md:px-6 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2">
           <Image
-            src="/images/logo/logo.svg"
+            src="/images/logo/logo-icon.svg"
             alt="Logo"
-            width={120}
-            height={32}
+            width={40}
+            height={40}
             className="dark:hidden"
+            style={{ height: "40px", width: "auto" }}
           />
           <Image
-            src="/images/logo/logo-dark.svg"
+            src="/images/logo/logo-icon.svg"
             alt="Logo"
-            width={120}
-            height={32}
+            width={40}
+            height={40}
             className="hidden dark:block"
+            style={{ height: "40px", width: "auto" }}
           />
+          <span className="text-xl font-bold text-gray-800 dark:text-white">
+            BRANDSIGHT
+          </span>
         </Link>
 
         <div className="hidden md:flex items-center gap-8">

@@ -4,18 +4,18 @@ import { BoltIcon, BoxIcon, PieChartIcon } from "@/icons";
 
 const features = [
   {
-    title: "Dynamic Scraping",
-    description: "Built-in support for Puppeteer and Playwright to handle JavaScript-heavy websites flawlessly.",
+    title: "Real-Time Monitoring",
+    description: "Collect and clean textual data from open sources in real-time to stay ahead of the curve.",
     icon: <BoltIcon className="w-6 h-6 text-brand-500" />
   },
   {
-    title: "Intelligent Proxies",
-    description: "Automatic proxy rotation and residential pools to bypass geo-blocks and rate limiting.",
+    title: "Sentiment Analysis",
+    description: "Advanced NLP pipeline using Spacy to analyze sentiment and track specific keywords automatically.",
     icon: <BoxIcon className="w-6 h-6 text-purple-500" />
   },
   {
-    title: "Advanced Analytics",
-    description: "Track your success rates, data volume, and costs with our detailed visualization dashboard.",
+    title: "Interactive Dashboards",
+    description: "Visualize trends, keyword mentions, and engagement metrics with real-time updates.",
     icon: <PieChartIcon className="w-6 h-6 text-blue-500" />
   }
 ];
@@ -26,10 +26,10 @@ const LandingFeatures: React.FC = () => {
       <div className="container mx-auto px-4 md:px-6">
         <div className="text-center max-w-2xl mx-auto mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-            Everything you need for data collection
+            Platform for Brands in Real Time
           </h2>
           <p className="text-gray-600 dark:text-gray-400">
-            Powerful tools that make scraping simple, reliable, and scalable.
+            A web platform that helps companies monitor their brand performance in real-time.
           </p>
         </div>
         

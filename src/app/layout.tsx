@@ -9,6 +9,14 @@ const outfit = Outfit({
   subsets: ["latin"],
 });
 
+export const metadata = {
+  title: "BrandSight",
+  description: "Next.js Admin Dashboard",
+  icons: {
+    icon: "/images/logo/logo-icon.svg",
+  },
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{

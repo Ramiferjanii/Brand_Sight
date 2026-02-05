@@ -29,7 +29,7 @@ export default function SignInForm() {
     try {
       const response = await api.post("/auth/login", { email, password });
       login(response.data.user, response.data.token);
-      router.push("/");
+      router.push("/dashboard");
     } catch (err: any) {
       setError(err.response?.data?.error || "Login failed. Please try again.");
     } finally {
