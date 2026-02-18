@@ -4,36 +4,136 @@ import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
 import Button from "@/components/ui/button/Button";
 import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from "@/icons";
+import axios from "axios";
 import Link from "next/link";
 import React, { useState } from "react";
-import api from "@/lib/api";
+import { account } from "@/lib/appwrite";
+import api from "@/lib/api"; // Added for backend lookup
+import { OAuthProvider, ID } from "appwrite";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 
 export default function SignInForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
+  
+  // Login State
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  
+  // OTP State
+  const [isOtpMode, setIsOtpMode] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [tempUserId, setTempUserId] = useState("");
+
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const { login } = useAuth();
   const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handlePasswordLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
     try {
-      const response = await api.post("/auth/login", { email, password });
-      login(response.data.user, response.data.token);
+      try {
+        await account.deleteSession("current");
+      } catch (e) {
+        // Ignore
+      }
+      
+      await account.createEmailPasswordSession(email, password);
+      const user = await account.get();
+      login(user);
       router.push("/dashboard");
     } catch (err: any) {
-      setError(err.response?.data?.error || "Login failed. Please try again.");
+      console.error("Login error:", err);
+      setError(err.message || "Login failed. Please check your credentials.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSendOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    
+    let targetId = ID.unique();
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5003/api";
+    
+    try {
+        console.log(`Checking existing user at: ${apiUrl}/auth/get-user-id for ${email}`);
+        // Attempt to find existing user ID via backend to avoid conflict/errors
+        // Use axios directly to bypass Auth Interceptor (which fails for guests)
+        const check = await axios.post(`${apiUrl}/auth/get-user-id`, { email });
+        if (check.data?.userId) {
+            console.log("Found existing user ID:", check.data.userId);
+            targetId = check.data.userId;
+        }
+    } catch (apiErr) {
+        // If 404 (User not found) or network error, proceed with ID.unique() (New User flow)
+         console.warn("Backend user lookup failed (likely new user or network issue):", apiErr);
+    }
+
+    try {
+        // Create Email Token (sends OTP)
+        const token = await account.createEmailToken(targetId, email);
+        setTempUserId(token.userId);
+        setOtpSent(true);
+    } catch (err: any) {
+        console.error("OTP Error:", err);
+        if (err.type === "user_creation_disabled") {
+             setError("New user registration is currently disabled.");
+        } else if (err.code === 429) {
+             setError("Too many attempts. Please try again later.");
+        } else {
+             setError(err.message || "Failed to send OTP (Check Appwrite SMTP/Registration settings).");
+        }
+    } finally {
+        setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+        await account.createSession(tempUserId, otp);
+        const user = await account.get();
+        login(user);
+        router.push("/dashboard");
+    } catch (err: any) {
+        console.error("Verify Error:", err);
+        setError(err.message || "Invalid OTP code.");
+    } finally {
+        setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      // Clear any existing session first to prevent conflicts
+      try {
+        await account.deleteSession("current");
+      } catch (e) {
+        // Silently continue
+      }
+
+      const origin = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
+      
+      account.createOAuth2Session(
+        OAuthProvider.Google,
+        `${origin}/dashboard`,
+        `${origin}/signin?failure=true`
+      );
+    } catch (error) {
+      console.error("Google login failed:", error);
+      setError("Failed to initialize Google login.");
     }
   };
 
@@ -62,8 +162,10 @@ export default function SignInForm() {
       )}
 
       <div className="grid grid-cols-2 gap-4 mb-8">
-        {/* ... existing social buttons ... */}
-        <button className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-white/5 transition-all duration-200 font-medium text-sm text-gray-700 dark:text-gray-300">
+        <button 
+          onClick={handleGoogleLogin}
+          type="button"
+          className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-white/5 transition-all duration-200 font-medium text-sm text-gray-700 dark:text-gray-300">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M18.7511 10.1944C18.7511 9.47495 18.6915 8.94995 18.5626 8.40552H10.1797V11.6527H15.1003C15.0011 12.4597 14.4654 13.675 13.2749 14.4916L13.2582 14.6003L15.9087 16.6126L16.0924 16.6305C17.7788 15.1041 18.7511 12.8583 18.7511 10.1944Z" fill="#4285F4" />
             <path d="M10.1788 18.75C12.5895 18.75 14.6133 17.9722 16.0915 16.6305L13.274 14.4916C12.5201 15.0068 11.5081 15.3666 10.1788 15.3666C7.81773 15.3666 5.81379 13.8402 5.09944 11.7305L4.99473 11.7392L2.23868 13.8295L2.20264 13.9277C3.67087 16.786 6.68674 18.75 10.1788 18.75Z" fill="#34A853" />
@@ -89,58 +191,140 @@ export default function SignInForm() {
         </div>
       </div>
 
-      <form className="space-y-5" onSubmit={handleSubmit}>
-        <div>
-          <Label>Email Address</Label>
-          <Input
-            placeholder="name@company.com"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-        </div>
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <Label className="mb-0">Password</Label>
-            <Link
-              href="/reset-password"
-              className="text-sm font-medium text-brand-500 hover:text-brand-600 dark:text-brand-400 transition-colors"
-            >
-              Forgot password?
-            </Link>
-          </div>
-          <div className="relative">
-            <Input
-              type={showPassword ? "text" : "password"}
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 focus:outline-none transition-colors"
-            >
-              {showPassword ? <EyeIcon size={20} /> : <EyeCloseIcon size={20} />}
-            </button>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <Checkbox checked={isChecked} onChange={setIsChecked} />
-          <span className="text-sm text-gray-600 dark:text-gray-400 font-medium">Keep me logged in</span>
-        </div>
-
-        <Button
-          type="submit"
-          disabled={loading}
-          className="w-full h-11 text-base font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-brand-500/20 active:scale-[0.98]"
+      {/* Login Mode Toggle */}
+      <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl mb-6">
+        <button
+          type="button"
+          onClick={() => { setIsOtpMode(false); setOtpSent(false); setError(""); }}
+          className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
+            !isOtpMode 
+              ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm" 
+              : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+          }`}
         >
-          {loading ? "Signing In..." : "Sign In"}
-        </Button>
-      </form>
+          Password
+        </button>
+        <button
+          type="button"
+          onClick={() => { setIsOtpMode(true); setError(""); }}
+          className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${
+            isOtpMode 
+              ? "bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm" 
+              : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+          }`}
+        >
+          One-Time Code
+        </button>
+      </div>
+
+      {!isOtpMode ? (
+        /* Password Form */
+        <form className="space-y-5" onSubmit={handlePasswordLogin}>
+            <div>
+            <Label>Email Address</Label>
+            <Input
+                placeholder="name@company.com"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+            />
+            </div>
+            <div>
+            <div className="flex items-center justify-between mb-2">
+                <Label className="mb-0">Password</Label>
+                <Link
+                href="/reset-password"
+                className="text-sm font-medium text-brand-500 hover:text-brand-600 dark:text-brand-400 transition-colors"
+                >
+                Forgot password?
+                </Link>
+            </div>
+            <div className="relative">
+                <Input
+                type={showPassword ? "text" : "password"}
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                />
+                <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 focus:outline-none transition-colors"
+                >
+                {showPassword ? <EyeIcon size={20} /> : <EyeCloseIcon size={20} />}
+                </button>
+            </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+            <Checkbox checked={isChecked} onChange={setIsChecked} />
+            <span className="text-sm text-gray-600 dark:text-gray-400 font-medium">Keep me logged in</span>
+            </div>
+
+            <Button
+            type="submit"
+            disabled={loading}
+            className="w-full h-11 text-base font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-brand-500/20 active:scale-[0.98]"
+            >
+            {loading ? "Signing In..." : "Sign In"}
+            </Button>
+        </form>
+      ) : (
+        /* OTP Form */
+        <form className="space-y-5" onSubmit={otpSent ? handleVerifyOtp : handleSendOtp}>
+            {!otpSent ? (
+                <>
+                    <div>
+                        <Label>Email Address</Label>
+                        <Input
+                            placeholder="name@company.com"
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            required
+                        />
+                        <p className="mt-2 text-xs text-gray-500">
+                            We will send a one-time verification code to this email.
+                        </p>
+                    </div>
+                    <Button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full h-11 text-base font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-brand-500/20 active:scale-[0.98]"
+                    >
+                        {loading ? "Sending Code..." : "Send Verification Code"}
+                    </Button>
+                </>
+            ) : (
+                <>
+                    <div>
+                        <Label>Verification Code</Label>
+                        <Input
+                            placeholder="123456"
+                            type="text"
+                            value={otp}
+                            onChange={(e) => setOtp(e.target.value)}
+                            required
+                            className="text-center tracking-widest text-lg"
+                        />
+                        <div className="mt-2 flex justify-between items-center text-xs">
+                             <span className="text-gray-500">Sent to {email}</span>
+                             <button type="button" onClick={() => setOtpSent(false)} className="text-brand-500 hover:underline">Change Email</button>
+                        </div>
+                    </div>
+                    <Button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full h-11 text-base font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-brand-500/20 active:scale-[0.98]"
+                    >
+                        {loading ? "Verifying..." : "Verify & Login"}
+                    </Button>
+                </>
+            )}
+        </form>
+      )}
 
       <p className="mt-8 text-center text-sm text-gray-600 dark:text-gray-400">
         Don&apos;t have an account?{" "}

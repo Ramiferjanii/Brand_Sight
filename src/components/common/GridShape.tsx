@@ -21,6 +21,7 @@ export default function GridShape() {
           src="/images/shape/grid-01.svg"
           alt="grid"
           style={{ width: "100%", height: "auto" }}
+          priority
         />
       </div>
     </>

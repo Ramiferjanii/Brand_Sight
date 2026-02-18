@@ -63,10 +63,10 @@ export default function UserDropdown() {
       >
         <div>
           <span className="block font-medium text-gray-700 text-theme-sm dark:text-gray-400">
-           {user?.name || "Rami Ben Ferjani"}
+           {user?.name || "User"}
           </span>
           <span className="mt-0.5 block text-theme-xs text-gray-500 dark:text-gray-400">
-            {user?.email || "ramiferjani.20@gmail.com"}
+            {user?.email || ""}
           </span>
         </div>
 

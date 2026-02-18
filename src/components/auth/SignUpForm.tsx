@@ -6,7 +6,9 @@ import Button from "@/components/ui/button/Button";
 import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from "@/icons";
 import Link from "next/link";
 import React, { useState } from "react";
-import api from "@/lib/api";
+// import api from "@/lib/api"; // Removed
+import { account } from "@/lib/appwrite";
+import { OAuthProvider, ID } from "appwrite";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 
@@ -29,30 +31,139 @@ export default function SignUpForm() {
       setError("Please agree to the Terms of Service.");
       return;
     }
+    
+    // Validation
+    if (password.length < 8) {
+        setError("Password must be at least 8 characters long.");
+        return;
+    }
+    if (!firstName.trim() || !lastName.trim()) {
+        setError("First and Last Name are required.");
+        return;
+    }
+
     setError("");
     setLoading(true);
 
-    try {
-      const response = await api.post("/auth/register", {
-        name: `${firstName} ${lastName}`.trim(),
-        email,
-        password
-      });
+    // Local Password Check (to avoid 400 from Appwrite)
+    // Relaxed regex: At least 8 chars, 1 lower, 1 upper, 1 number, 1 special char (any symbol)
+    const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\da-zA-Z]).{8,}$/;
 
-      // Auto-login after registration if the backend returns a token, 
-      // otherwise redirect to signin.
-      // Based on auth.js, register doesn't return a token, just the user data.
-      // So I'll redirect to signin.
-      router.push("/signin");
+    if (!strongPasswordRegex.test(password)) {
+        setLoading(false);
+        setError("Password must have 8+ chars, uppercase, lowercase, number, and symbol.");
+        return;
+    }
+
+    const projectId = (process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID || "").trim();
+    const userEmail = email.trim().toLowerCase();
+    const userName = `${firstName.trim()} ${lastName.trim()}`;
+    
+    console.log("--- STARTING REGISTRATION ---");
+    console.log("Using Project:", projectId);
+    console.log("Email:", userEmail);
+
+    try {
+        // Step 1: Clean start. Try to logout but don't care if it fails.
+        try {
+            await account.deleteSession("current");
+            console.log("Cleared old session");
+        } catch (e) {
+            // Silently continue
+        }
+
+        // Step 2: Create Account
+        // Using ID.unique() is the standard way
+        try {
+            await account.create(
+                ID.unique(), 
+                userEmail,
+                password,
+                userName
+            );
+            console.log("Account created!");
+        } catch (createErr: any) {
+            console.error("Account Creation Failed:", createErr);
+            // If user already exists (409), we might want to try logging them in instead
+            if (createErr.code === 409 || createErr.type === 'user_already_exists') {
+                 // Proceed to session creation anyway? Better to tell them.
+                 throw createErr;
+            }
+            throw createErr;
+        }
+
+        // Step 3: Create Session
+        console.log("Starting session...");
+        await account.createEmailPasswordSession(userEmail, password);
+        
+        // Step 4: Finalize
+        const userData = await account.get();
+        login(userData); 
+        
+        console.log("Registration Successful!");
+        router.push("/dashboard");
+
     } catch (err: any) {
-      setError(err.response?.data?.error || "Registration failed. Please try again.");
+        console.error("--- REGISTRATION ERROR DETAILS ---", err);
+        
+        // Map specific Appwrite errors to user-friendly messages
+        if (err.type === "user_already_exists" || err.code === 409) {
+            setError("This email is already taken. Please Sign In.");
+        } else if (err.type === "user_password_recently_used") {
+            setError("Password is too weak or recently used.");
+        } else if (err.code === 400) {
+            // ... (existing 400 handling)
+            if (err.message.toLowerCase().includes("password")) {
+                 setError("Password rejected. It might be too common, or similar to your name/email.");
+            } else if (err.message.toLowerCase().includes("email")) {
+                 setError("Invalid email address format.");
+            } else if (err.message.toLowerCase().includes("inputs") || err.message.toLowerCase().includes("check the inputs")) {
+                 // Check if password contains name parts
+                 if (password.toLowerCase().includes(firstName.toLowerCase()) || password.toLowerCase().includes(lastName.toLowerCase())) {
+                     setError("Registration failed: Password cannot contain your first or last name.");
+                 } else {
+                     setError("Registration failed. Please check if 'Email/Password'");
+                 }
+            } else {
+                setError(`Appwrite Error: ${err.message}`);
+            }
+        } else if (err.code === 429) {
+            setError("Too many registration attempts. Appwrite has temporarily blocked requests. Please wait 15-60 minutes or try a different network.");
+        } else if (err.type === "user_creation_disabled") {
+            setError("Registration is currently disabled in the project settings.");
+        } else {
+            setError(err.message || "Something went wrong. Please try again.");
+        }
     } finally {
-      setLoading(false);
+        setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+       // Clear any existing session first
+       try {
+        await account.deleteSession("current");
+      } catch (e) {
+        // Silently continue
+      }
+
+      const origin = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
+
+      account.createOAuth2Session(
+        OAuthProvider.Google,
+        `${origin}/dashboard`,
+        `${origin}/signup?failure=true`
+      );
+    } catch (error) {
+      console.error("Google login failed:", error);
+      setError("Failed to initialize Google login.");
     }
   };
 
   return (
     <div className="w-full max-w-md mx-auto py-8">
+      {/* ... header ... */}
       <div className="mb-8 text-center sm:text-left">
         <Link
           href="/dashboard"
@@ -76,8 +187,10 @@ export default function SignUpForm() {
       )}
 
       <div className="grid grid-cols-2 gap-4 mb-8">
-        {/* ... existing social buttons ... */}
-        <button className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-white/5 transition-all duration-200 font-medium text-sm text-gray-700 dark:text-gray-300">
+        <button 
+          onClick={handleGoogleLogin}
+          type="button"
+          className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-white/5 transition-all duration-200 font-medium text-sm text-gray-700 dark:text-gray-300">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M18.7511 10.1944C18.7511 9.47495 18.6915 8.94995 18.5626 8.40552H10.1797V11.6527H15.1003C15.0011 12.4597 14.4654 13.675 13.2749 14.4916L13.2582 14.6003L15.9087 16.6126L16.0924 16.6305C17.7788 15.1041 18.7511 12.8583 18.7511 10.1944Z" fill="#4285F4" />
             <path d="M10.1788 18.75C12.5895 18.75 14.6133 17.9722 16.0915 16.6305L13.274 14.4916C12.5201 15.0068 11.5081 15.3666 10.1788 15.3666C7.81773 15.3666 5.81379 13.8402 5.09944 11.7305L4.99473 11.7392L2.23868 13.8295L2.20264 13.9277C3.67087 16.786 6.68674 18.75 10.1788 18.75Z" fill="#34A853" />

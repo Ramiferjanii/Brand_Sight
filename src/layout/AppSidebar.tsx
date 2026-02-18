@@ -43,6 +43,7 @@ const navItems: NavItem[] = [
     subItems: [
       { name: "Scraping", path: "/scraping", pro: false },
       { name: "Settings", path: "/scraping/settings", pro: false },
+      { name: "Products", path: "/products", pro: false },
     ],
   },
   {
@@ -340,7 +341,7 @@ const AppSidebar: React.FC = () => {
             </>
           ) : (
             <Image
-              src="/images/logo/logo-icon.png"
+              src="/images/logo/logo-icon.svg"
               alt="Logo"
               width={32}
               height={32}
