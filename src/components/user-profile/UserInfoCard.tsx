@@ -6,7 +6,7 @@ import Button from "../ui/button/Button";
 import Input from "../form/input/InputField";
 import Label from "../form/Label";
 import { useAuth } from "@/context/AuthContext";
-import { account } from "@/lib/appwrite";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function UserInfoCard() {
   const { user, refreshUser } = useAuth();
@@ -19,8 +19,8 @@ export default function UserInfoCard() {
 
   useEffect(() => {
     if (user) {
-      setName(user.name);
-      setEmail(user.email);
+      setName(user.user_metadata.full_name || "");
+      setEmail(user.email || "");
     }
   }, [user, isOpen]);
 
@@ -28,11 +28,13 @@ export default function UserInfoCard() {
     e.preventDefault();
     setLoading(true);
     try {
-        if (name !== user?.name) {
-            await account.updateName(name);
+        if (name !== user?.user_metadata.full_name) {
+            await supabase.auth.updateUser({
+              data: { full_name: name }
+            });
         }
         if (password && password.length >= 8) {
-            await account.updatePassword(password);
+            await supabase.auth.updateUser({ password: password });
         }
         
         await refreshUser();
@@ -60,7 +62,7 @@ export default function UserInfoCard() {
                 Full Name
               </p>
               <p className="text-sm font-medium text-gray-800 dark:text-white/90">
-                {user.name || "N/A"}
+                {user.user_metadata.full_name || "N/A"}
               </p>
             </div>
 
@@ -78,7 +80,7 @@ export default function UserInfoCard() {
                 User ID
               </p>
               <p className="text-sm font-medium text-gray-800 dark:text-white/90 font-mono text-xs">
-                {user.$id}
+                {user.id}
               </p>
             </div>
             
@@ -87,7 +89,7 @@ export default function UserInfoCard() {
                 Status
               </p>
               <p className="text-sm font-medium text-green-500">
-                {user.status ? "Active" : "Unverified"}
+                {user.aud === 'authenticated' ? "Active" : "Unverified"}
               </p>
             </div>
           </div>
@@ -104,8 +106,7 @@ export default function UserInfoCard() {
         </button>
       </div>
 
-      <Modal isOpen={isOpen} onClose={closeModal} className="max-w-[700px] m-4">
-        <div className="no-scrollbar relative w-full max-w-[700px] overflow-y-auto rounded-3xl bg-white p-4 dark:bg-gray-900 lg:p-11">
+      <Modal isOpen={isOpen} onClose={closeModal} className="max-w-[700px] m-4 p-5 lg:p-11 overflow-y-auto">
           <div className="px-2 pr-14">
             <h4 className="mb-2 text-2xl font-semibold text-gray-800 dark:text-white/90">
               Edit Personal Information
@@ -148,7 +149,6 @@ export default function UserInfoCard() {
               </Button>
             </div>
           </form>
-        </div>
       </Modal>
     </div>
   );

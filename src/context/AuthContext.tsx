@@ -2,12 +2,12 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { account } from "@/lib/appwrite";
-import { Models } from "appwrite";
+import { supabase } from "@/lib/supabaseClient";
+import { User } from "@supabase/supabase-js";
 
 interface AuthContextType {
-  user: Models.User<Models.Preferences> | null;
-  login: (user: Models.User<Models.Preferences>) => void;
+  user: User | null;
+  login: (user: User) => void;
   logout: () => Promise<void>;
   isLoading: boolean;
   refreshUser: () => Promise<void>;
@@ -16,57 +16,45 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<Models.User<Models.Preferences> | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
   const refreshUser = async () => {
     setIsLoading(true);
-    let finalUser: Models.User<Models.Preferences> | null = null;
-
-    const fetchSession = async () => {
-      try {
-        return await account.get();
-      } catch (error) {
-        return null;
-      }
-    };
-
-    // First attempt
-    finalUser = await fetchSession();
-    
-    // If failed but we see OAuth params, retry with backoff
-    if (!finalUser && typeof window !== 'undefined') {
-        const params = new URLSearchParams(window.location.search);
-        if (params.has('userId') || params.has('secret')) {
-             console.log("OAuth Redirect Detected - Waiting for session to sync...");
-             for (let i = 0; i < 3; i++) {
-                 await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
-                 finalUser = await fetchSession();
-                 if (finalUser) {
-                    console.log("Session sync success!");
-                    break;
-                 }
-             }
-        }
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user ?? null);
+    } catch (error) {
+      console.error("Error refreshing user:", error);
+      setUser(null);
+    } finally {
+      setIsLoading(false);
     }
-
-    setUser(finalUser);
-    setIsLoading(false);
   };
 
   useEffect(() => {
     refreshUser();
+
+    // Listen for auth state changes (sign in, sign out, etc.)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      setIsLoading(false);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
-  const login = (userData: Models.User<Models.Preferences>) => {
+  const login = (userData: User) => {
     setUser(userData);
     setIsLoading(false);
   };
 
   const logout = async () => {
     try {
-      await account.deleteSession("current");
+      await supabase.auth.signOut();
       setUser(null);
       router.push("/signin");
     } catch (error) {
