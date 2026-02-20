@@ -34,7 +34,7 @@ export default function UserDropdown() {
           />
         </span>
 
-        <span className="block mr-1 font-medium text-theme-sm">{user?.name || "Rami Ben Ferjani"}</span>
+        <span className="block mr-1 font-medium text-theme-sm">{user?.user_metadata?.name || user?.email?.split('@')[0] || "User"}</span>
 
         <svg
           className={`stroke-gray-500 dark:stroke-gray-400 transition-transform duration-200 ${
@@ -63,7 +63,7 @@ export default function UserDropdown() {
       >
         <div>
           <span className="block font-medium text-gray-700 text-theme-sm dark:text-gray-400">
-           {user?.name || "User"}
+           {user?.user_metadata?.name || user?.email?.split('@')[0] || "User"}
           </span>
           <span className="mt-0.5 block text-theme-xs text-gray-500 dark:text-gray-400">
             {user?.email || ""}

@@ -6,7 +6,7 @@ import Button from "../ui/button/Button";
 import Input from "../form/input/InputField";
 import Label from "../form/Label";
 import { useAuth } from "@/context/AuthContext";
-import { account } from "@/lib/appwrite";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function UserAddressCard() {
   const { user, refreshUser } = useAuth();
@@ -19,11 +19,11 @@ export default function UserAddressCard() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (user && user.prefs) {
-        setCountry(user.prefs.country || "");
-        setCityState(user.prefs.cityState || "");
-        setPostalCode(user.prefs.postalCode || "");
-        setTaxId(user.prefs.taxId || "");
+    if (user && user.user_metadata) {
+        setCountry(user.user_metadata.country || "");
+        setCityState(user.user_metadata.cityState || "");
+        setPostalCode(user.user_metadata.postalCode || "");
+        setTaxId(user.user_metadata.taxId || "");
     }
   }, [user, isOpen]);
 
@@ -32,14 +32,16 @@ export default function UserAddressCard() {
     if (!user) return;
     setLoading(true);
     try {
-        const updatedPrefs = {
-            ...user.prefs,
-            country,
-            cityState,
-            postalCode,
-            taxId
-        };
-        await account.updatePrefs(updatedPrefs);
+        const { error } = await supabase.auth.updateUser({
+            data: {
+                country,
+                cityState,
+                postalCode,
+                taxId
+            }
+        });
+        
+        if (error) throw error;
         await refreshUser();
         closeModal();
     } catch (error: any) {
@@ -122,8 +124,7 @@ export default function UserAddressCard() {
           </button>
         </div>
       </div>
-      <Modal isOpen={isOpen} onClose={closeModal} className="max-w-[700px] m-4">
-        <div className="relative w-full p-4 overflow-y-auto bg-white no-scrollbar rounded-3xl dark:bg-gray-900 lg:p-11">
+      <Modal isOpen={isOpen} onClose={closeModal} className="max-w-[700px] m-4 p-5 lg:p-11 overflow-y-auto">
           <div className="px-2 pr-14">
             <h4 className="mb-2 text-2xl font-semibold text-gray-800 dark:text-white/90">
               Edit Address
@@ -133,7 +134,7 @@ export default function UserAddressCard() {
             </p>
           </div>
           <form className="flex flex-col" onSubmit={handleSave}>
-            <div className="px-2 overflow-y-auto custom-scrollbar">
+            <div className="custom-scrollbar">
               <div className="grid grid-cols-1 gap-x-6 gap-y-5 lg:grid-cols-2">
                 <div>
                   <Label>Country</Label>
@@ -165,7 +166,6 @@ export default function UserAddressCard() {
               </Button>
             </div>
           </form>
-        </div>
       </Modal>
     </>
   );

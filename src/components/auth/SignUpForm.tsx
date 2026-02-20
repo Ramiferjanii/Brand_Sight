@@ -6,11 +6,10 @@ import Button from "@/components/ui/button/Button";
 import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from "@/icons";
 import Link from "next/link";
 import React, { useState } from "react";
-// import api from "@/lib/api"; // Removed
-import { account } from "@/lib/appwrite";
-import { OAuthProvider, ID } from "appwrite";
+import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
+import api from "@/lib/api";
 
 export default function SignUpForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -25,6 +24,9 @@ export default function SignUpForm() {
   const { login } = useAuth();
   const router = useRouter();
 
+  const [needsVerification, setNeedsVerification] = useState(false);
+  const [otp, setOtp] = useState("");
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isChecked) {
@@ -32,7 +34,6 @@ export default function SignUpForm() {
       return;
     }
     
-    // Validation
     if (password.length < 8) {
         setError("Password must be at least 8 characters long.");
         return;
@@ -45,125 +46,152 @@ export default function SignUpForm() {
     setError("");
     setLoading(true);
 
-    // Local Password Check (to avoid 400 from Appwrite)
-    // Relaxed regex: At least 8 chars, 1 lower, 1 upper, 1 number, 1 special char (any symbol)
-    const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\da-zA-Z]).{8,}$/;
-
-    if (!strongPasswordRegex.test(password)) {
-        setLoading(false);
-        setError("Password must have 8+ chars, uppercase, lowercase, number, and symbol.");
-        return;
-    }
-
-    const projectId = (process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID || "").trim();
-    const userEmail = email.trim().toLowerCase();
-    const userName = `${firstName.trim()} ${lastName.trim()}`;
-    
-    console.log("--- STARTING REGISTRATION ---");
-    console.log("Using Project:", projectId);
-    console.log("Email:", userEmail);
-
     try {
-        // Step 1: Clean start. Try to logout but don't care if it fails.
-        try {
-            await account.deleteSession("current");
-            console.log("Cleared old session");
-        } catch (e) {
-            // Silently continue
-        }
-
-        // Step 2: Create Account
-        // Using ID.unique() is the standard way
-        try {
-            await account.create(
-                ID.unique(), 
-                userEmail,
-                password,
-                userName
-            );
-            console.log("Account created!");
-        } catch (createErr: any) {
-            console.error("Account Creation Failed:", createErr);
-            // If user already exists (409), we might want to try logging them in instead
-            if (createErr.code === 409 || createErr.type === 'user_already_exists') {
-                 // Proceed to session creation anyway? Better to tell them.
-                 throw createErr;
+        const { data, error: signUpError } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+                data: {
+                    name: `${firstName} ${lastName}`,
+                    full_name: `${firstName} ${lastName}`,
+                }
             }
-            throw createErr;
+        });
+
+        if (signUpError) throw signUpError;
+
+        if (data.user) {
+             // Sync user to backend public table
+             try {
+                await api.post('/auth/sync-user', {
+                    id: data.user.id,
+                    email: email,
+                    full_name: `${firstName} ${lastName}`
+                });
+             } catch (syncError) {
+                 console.error("Failed to sync user to public table:", syncError);
+             }
+
+             if (data.user.identities && data.user.identities.length === 0) {
+                 setError("This email is already in use.");
+                 setLoading(false);
+                 return;
+             }
+             
+             if (data.session) {
+                 login(data.user);
+                 router.push("/dashboard");
+             } else {
+                 setNeedsVerification(true);
+                 setError(""); 
+             }
         }
-
-        // Step 3: Create Session
-        console.log("Starting session...");
-        await account.createEmailPasswordSession(userEmail, password);
-        
-        // Step 4: Finalize
-        const userData = await account.get();
-        login(userData); 
-        
-        console.log("Registration Successful!");
-        router.push("/dashboard");
-
     } catch (err: any) {
-        console.error("--- REGISTRATION ERROR DETAILS ---", err);
-        
-        // Map specific Appwrite errors to user-friendly messages
-        if (err.type === "user_already_exists" || err.code === 409) {
-            setError("This email is already taken. Please Sign In.");
-        } else if (err.type === "user_password_recently_used") {
-            setError("Password is too weak or recently used.");
-        } else if (err.code === 400) {
-            // ... (existing 400 handling)
-            if (err.message.toLowerCase().includes("password")) {
-                 setError("Password rejected. It might be too common, or similar to your name/email.");
-            } else if (err.message.toLowerCase().includes("email")) {
-                 setError("Invalid email address format.");
-            } else if (err.message.toLowerCase().includes("inputs") || err.message.toLowerCase().includes("check the inputs")) {
-                 // Check if password contains name parts
-                 if (password.toLowerCase().includes(firstName.toLowerCase()) || password.toLowerCase().includes(lastName.toLowerCase())) {
-                     setError("Registration failed: Password cannot contain your first or last name.");
-                 } else {
-                     setError("Registration failed. Please check if 'Email/Password'");
-                 }
-            } else {
-                setError(`Appwrite Error: ${err.message}`);
-            }
-        } else if (err.code === 429) {
-            setError("Too many registration attempts. Appwrite has temporarily blocked requests. Please wait 15-60 minutes or try a different network.");
-        } else if (err.type === "user_creation_disabled") {
-            setError("Registration is currently disabled in the project settings.");
+        console.error("SignUp Error:", err);
+        if (err.message.includes("rate limit exceeded")) {
+             // Rate limit hit -> assume account exists or they spammed.
+             // Try to log them in directly as a convenience, or just error.
+             setError("Too many signup attempts. Please trying Signing In instead.");
+             // Optional: automatically switch to sign in view or redirect
+             setTimeout(() => router.push("/signin"), 2000);
         } else {
-            setError(err.message || "Something went wrong. Please try again.");
+             setError(err.message || "Failed to create account.");
         }
     } finally {
         setLoading(false);
     }
   };
 
+  const handleResendOtp = async () => {
+    setError("");
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: email,
+      });
+      if (error) throw error;
+      alert("A new verification code has been sent to your email.");
+    } catch (err: any) {
+      console.error("Resend OTP Error:", err);
+      setError(err.message || "Failed to resend code.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+      e.preventDefault();
+      setError("");
+      setLoading(true);
+
+      try {
+          const { data, error } = await supabase.auth.verifyOtp({
+              email,
+              token: otp,
+              type: 'signup'
+          });
+
+          if (error) throw error;
+
+          if (data.user && data.session) {
+              login(data.user);
+              router.push("/dashboard");
+          } else {
+              setError("Verification successful! Please sign in.");
+              setTimeout(() => router.push("/signin"), 2000);
+          }
+      } catch (err: any) {
+          console.error("OTP Verification Error:", err);
+          
+          // Fallback: User might already be verified (clicked link?) or code is strictly invalid.
+          // Let's try to just log them in with the password they set.
+          try {
+              const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
+                  email,
+                  password
+              });
+              
+              if (!loginError && loginData.session) {
+                  console.log("Fallback login successful (User likely already verified)");
+                  login(loginData.user);
+                  router.push("/dashboard");
+                  return;
+              }
+          } catch (loginErr) {
+              // Ignore login error, report original verification error
+          }
+
+          if (err.message.includes("Token has expired") || err.message.includes("invalid")) {
+              setError("Invalid code. If you verified by clicking the email link, you are already verified—please just Sign In.");
+          } else {
+              setError(err.message || "Invalid OTP code.");
+          }
+      } finally {
+          setLoading(false);
+      }
+  };
+
   const handleGoogleLogin = async () => {
     try {
-       // Clear any existing session first
-       try {
-        await account.deleteSession("current");
-      } catch (e) {
-        // Silently continue
-      }
-
       const origin = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
+      
+      const { error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+              redirectTo: `${origin}/auth/callback` 
+          }
+      });
 
-      account.createOAuth2Session(
-        OAuthProvider.Google,
-        `${origin}/dashboard`,
-        `${origin}/signup?failure=true`
-      );
-    } catch (error) {
+      if (error) throw error;
+    } catch (error: any) {
       console.error("Google login failed:", error);
-      setError("Failed to initialize Google login.");
+      setError(error.message || "Failed to initialize Google login.");
     }
   };
 
   return (
     <div className="w-full max-w-md mx-auto py-8">
-      {/* ... header ... */}
       <div className="mb-8 text-center sm:text-left">
         <Link
           href="/dashboard"
@@ -173,10 +201,12 @@ export default function SignUpForm() {
           Back to Dashboard
         </Link>
         <h1 className="text-3xl font-bold text-gray-800 dark:text-white/90 mb-2">
-          Create Account
+          {needsVerification ? "Verify Email" : "Create Account"}
         </h1>
         <p className="text-gray-500 dark:text-gray-400">
-          Join thousands of users and start automating today.
+          {needsVerification 
+            ? `We've sent a 6-digit code to ${email}. Please enter the MOST RECENT code below.` 
+            : "Join thousands of users and start automating today."}
         </p>
       </div>
 
@@ -186,6 +216,8 @@ export default function SignUpForm() {
         </div>
       )}
 
+      {!needsVerification ? (
+      <>
       <div className="grid grid-cols-2 gap-4 mb-8">
         <button 
           onClick={handleGoogleLogin}
@@ -265,40 +297,89 @@ export default function SignUpForm() {
               type="button"
               onClick={() => setShowPassword(!showPassword)}
               className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 focus:outline-none transition-colors"
-            >
-              {showPassword ? <EyeIcon size={20} /> : <EyeCloseIcon size={20} />}
-            </button>
+              >
+                {showPassword ? <EyeIcon size={20} /> : <EyeCloseIcon size={20} />}
+              </button>
+            </div>
+            <p className="mt-1.5 text-xs text-gray-500">Must be at least 8 characters.</p>
           </div>
-          <p className="mt-1.5 text-xs text-gray-500">Must be at least 8 characters.</p>
-        </div>
+  
+          <div className="flex items-start gap-3 py-2">
+            <Checkbox checked={isChecked} onChange={setIsChecked} className="mt-0.5" />
+            <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed font-medium">
+              By signing up, you agree to our{" "}
+              <Link href="/terms" className="text-brand-500 hover:underline">Terms of Service</Link> and{" "}
+              <Link href="/privacy" className="text-brand-500 hover:underline">Privacy Policy</Link>.
+            </p>
+          </div>
+  
+          <Button
+            type="submit"
+            disabled={loading}
+            className="w-full h-11 text-base font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-brand-500/20 active:scale-[0.98] mt-2"
+          >
+            {loading ? "Creating Account..." : "Create Account"}
+          </Button>
+        </form>
+        </>
+      ) : (
+        /* OTP Verification Form */
+        <form className="space-y-6" onSubmit={handleVerifyOtp}>
+             <div>
+                <Label>One-Time Code</Label>
+                <Input
+                    placeholder="123456"
+                    type="text"
+                    value={otp}
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    className="text-center tracking-[0.5em] text-lg font-bold"
+                    required
+                />
+                <p className="text-sm text-gray-500 mt-2">
+                    Check your email (including spam) for the confirmation code.
+                </p>
+             </div>
 
-        <div className="flex items-start gap-3 py-2">
-          <Checkbox checked={isChecked} onChange={setIsChecked} className="mt-0.5" />
-          <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed font-medium">
-            By signing up, you agree to our{" "}
-            <Link href="/terms" className="text-brand-500 hover:underline">Terms of Service</Link> and{" "}
-            <Link href="/privacy" className="text-brand-500 hover:underline">Privacy Policy</Link>.
-          </p>
-        </div>
+             <Button
+                type="submit"
+                disabled={loading || otp.length < 6}
+                className="w-full h-11 text-base font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-brand-500/20 active:scale-[0.98]"
+            >
+                {loading ? "Verifying..." : "Verify & Sign In"}
+            </Button>
+            
+            <div className="flex flex-col items-center gap-2 mt-4">
+                <button 
+                  type="button" 
+                  onClick={handleResendOtp}
+                  disabled={loading}
+                  className="text-sm text-brand-500 hover:text-brand-600 font-medium"
+                >
+                    Resend Code
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => setNeedsVerification(false)}
+                  className="text-sm text-gray-500 hover:underline"
+                >
+                    Entered wrong email? Go back
+                </button>
+            </div>
+        </form>
+      )}
 
-        <Button
-          type="submit"
-          disabled={loading}
-          className="w-full h-11 text-base font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-brand-500/20 active:scale-[0.98] mt-2"
-        >
-          {loading ? "Creating Account..." : "Create Account"}
-        </Button>
-      </form>
-
-      <p className="mt-8 text-center text-sm text-gray-600 dark:text-gray-400">
-        Already have an account?{" "}
-        <Link
-          href="/signin"
-          className="font-bold text-brand-500 hover:text-brand-600 dark:text-brand-400 transition-colors"
-        >
-          Sign In
-        </Link>
-      </p>
+      {!needsVerification && (
+        <p className="mt-8 text-center text-sm text-gray-600 dark:text-gray-400">
+            Already have an account?{" "}
+            <Link
+            href="/signin"
+            className="font-bold text-brand-500 hover:text-brand-600 dark:text-brand-400 transition-colors"
+            >
+            Sign In
+            </Link>
+        </p>
+      )}
     </div>
   );
 }
+

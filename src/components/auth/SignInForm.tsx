@@ -4,14 +4,12 @@ import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
 import Button from "@/components/ui/button/Button";
 import { ChevronLeftIcon, EyeCloseIcon, EyeIcon } from "@/icons";
-import axios from "axios";
 import Link from "next/link";
 import React, { useState } from "react";
-import { account } from "@/lib/appwrite";
-import api from "@/lib/api"; // Added for backend lookup
-import { OAuthProvider, ID } from "appwrite";
+import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
+import api from "@/lib/api";
 
 export default function SignInForm() {
   const [showPassword, setShowPassword] = useState(false);
@@ -21,11 +19,10 @@ export default function SignInForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   
-  // OTP State
+  // OTP State (Temporarily disabled for Supabase migration)
   const [isOtpMode, setIsOtpMode] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState("");
-  const [tempUserId, setTempUserId] = useState("");
 
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -39,19 +36,35 @@ export default function SignInForm() {
     setLoading(true);
 
     try {
-      try {
-        await account.deleteSession("current");
-      } catch (e) {
-        // Ignore
+      const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password
+      });
+
+      if (error) throw error;
+
+      if (data.user) {
+          // Sync user to backend public table (Heal missing accounts)
+          try {
+             await api.post('/auth/sync-user', {
+                id: data.user.id,
+                email: email,
+                full_name: data.user.user_metadata?.full_name || data.user.user_metadata?.name
+             });
+          } catch (syncError) {
+             console.error("Login Sync failed:", syncError);
+          }
+
+          login(data.user);
+          router.push("/dashboard");
       }
-      
-      await account.createEmailPasswordSession(email, password);
-      const user = await account.get();
-      login(user);
-      router.push("/dashboard");
     } catch (err: any) {
       console.error("Login error:", err);
-      setError(err.message || "Login failed. Please check your credentials.");
+      if (err.message === "Invalid login credentials") {
+        setError("Invalid Email or Password");
+      } else {
+        setError(err.message || "Login failed. Please check your credentials.");
+      }
     } finally {
       setLoading(false);
     }
@@ -59,81 +72,30 @@ export default function SignInForm() {
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-    setLoading(true);
-    
-    let targetId = ID.unique();
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5003/api";
-    
-    try {
-        console.log(`Checking existing user at: ${apiUrl}/auth/get-user-id for ${email}`);
-        // Attempt to find existing user ID via backend to avoid conflict/errors
-        // Use axios directly to bypass Auth Interceptor (which fails for guests)
-        const check = await axios.post(`${apiUrl}/auth/get-user-id`, { email });
-        if (check.data?.userId) {
-            console.log("Found existing user ID:", check.data.userId);
-            targetId = check.data.userId;
-        }
-    } catch (apiErr) {
-        // If 404 (User not found) or network error, proceed with ID.unique() (New User flow)
-         console.warn("Backend user lookup failed (likely new user or network issue):", apiErr);
-    }
-
-    try {
-        // Create Email Token (sends OTP)
-        const token = await account.createEmailToken(targetId, email);
-        setTempUserId(token.userId);
-        setOtpSent(true);
-    } catch (err: any) {
-        console.error("OTP Error:", err);
-        if (err.type === "user_creation_disabled") {
-             setError("New user registration is currently disabled.");
-        } else if (err.code === 429) {
-             setError("Too many attempts. Please try again later.");
-        } else {
-             setError(err.message || "Failed to send OTP (Check Appwrite SMTP/Registration settings).");
-        }
-    } finally {
-        setLoading(false);
-    }
+    setError("Magic Link/OTP is currently being upgraded. Please use Password or Google Sign In.");
+    // Supabase Magic Link implementation would go here
   };
 
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
-    setLoading(true);
-    try {
-        await account.createSession(tempUserId, otp);
-        const user = await account.get();
-        login(user);
-        router.push("/dashboard");
-    } catch (err: any) {
-        console.error("Verify Error:", err);
-        setError(err.message || "Invalid OTP code.");
-    } finally {
-        setLoading(false);
-    }
+    // Implementation for verifying magic link/OTP
   };
 
   const handleGoogleLogin = async () => {
     try {
-      // Clear any existing session first to prevent conflicts
-      try {
-        await account.deleteSession("current");
-      } catch (e) {
-        // Silently continue
-      }
-
       const origin = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
       
-      account.createOAuth2Session(
-        OAuthProvider.Google,
-        `${origin}/dashboard`,
-        `${origin}/signin?failure=true`
-      );
-    } catch (error) {
+      const { error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+              redirectTo: `${origin}/auth/callback`
+          }
+      });
+
+      if (error) throw error;
+    } catch (error: any) {
       console.error("Google login failed:", error);
-      setError("Failed to initialize Google login.");
+      setError(error.message || "Failed to initialize Google login.");
     }
   };
 
@@ -192,6 +154,7 @@ export default function SignInForm() {
       </div>
 
       {/* Login Mode Toggle */}
+      {/* 
       <div className="flex bg-gray-100 dark:bg-gray-800 p-1 rounded-xl mb-6">
         <button
           type="button"
@@ -216,6 +179,7 @@ export default function SignInForm() {
           One-Time Code
         </button>
       </div>
+      */}
 
       {!isOtpMode ? (
         /* Password Form */
@@ -272,58 +236,11 @@ export default function SignInForm() {
             </Button>
         </form>
       ) : (
-        /* OTP Form */
-        <form className="space-y-5" onSubmit={otpSent ? handleVerifyOtp : handleSendOtp}>
-            {!otpSent ? (
-                <>
-                    <div>
-                        <Label>Email Address</Label>
-                        <Input
-                            placeholder="name@company.com"
-                            type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            required
-                        />
-                        <p className="mt-2 text-xs text-gray-500">
-                            We will send a one-time verification code to this email.
-                        </p>
-                    </div>
-                    <Button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full h-11 text-base font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-brand-500/20 active:scale-[0.98]"
-                    >
-                        {loading ? "Sending Code..." : "Send Verification Code"}
-                    </Button>
-                </>
-            ) : (
-                <>
-                    <div>
-                        <Label>Verification Code</Label>
-                        <Input
-                            placeholder="123456"
-                            type="text"
-                            value={otp}
-                            onChange={(e) => setOtp(e.target.value)}
-                            required
-                            className="text-center tracking-widest text-lg"
-                        />
-                        <div className="mt-2 flex justify-between items-center text-xs">
-                             <span className="text-gray-500">Sent to {email}</span>
-                             <button type="button" onClick={() => setOtpSent(false)} className="text-brand-500 hover:underline">Change Email</button>
-                        </div>
-                    </div>
-                    <Button
-                        type="submit"
-                        disabled={loading}
-                        className="w-full h-11 text-base font-semibold transition-all duration-300 hover:shadow-lg hover:shadow-brand-500/20 active:scale-[0.98]"
-                    >
-                        {loading ? "Verifying..." : "Verify & Login"}
-                    </Button>
-                </>
-            )}
-        </form>
+        /* OTP Form Placeholder */
+        <div className="text-center py-4">
+            <p className="text-gray-500">OTP Login is currently disabled for maintenance.</p>
+            <button onClick={() => setIsOtpMode(false)} className="text-brand-500 underline mt-2">Use Password Login</button>
+        </div>
       )}
 
       <p className="mt-8 text-center text-sm text-gray-600 dark:text-gray-400">
