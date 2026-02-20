@@ -8,6 +8,7 @@ import Label from "../form/Label";
 import Image from "next/image";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabaseClient";
+import api from "@/lib/api";
 
 export default function UserMetaCard() {
   const { user, refreshUser } = useAuth();
@@ -21,7 +22,7 @@ export default function UserMetaCard() {
   const [linkedin, setLinkedin] = useState("");
   const [instagram, setInstagram] = useState("");
   const [loading, setLoading] = useState(false);
-  const [avatarUrl, setAvatarUrl] = useState("/images/user/owner.png");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (user && user.user_metadata) {
@@ -31,9 +32,7 @@ export default function UserMetaCard() {
         setTwitter(user.user_metadata.twitter || "");
         setLinkedin(user.user_metadata.linkedin || "");
         setInstagram(user.user_metadata.instagram || "");
-        if (user.user_metadata.avatar) {
-            setAvatarUrl(user.user_metadata.avatar);
-        }
+        setAvatarUrl(user.user_metadata.avatar || null);
     }
   }, [user, isOpen]);
 
@@ -48,8 +47,8 @@ export default function UserMetaCard() {
 
       try {
           const fileExt = file.name.split('.').pop();
-          const fileName = `${user?.id}-${Math.random()}.${fileExt}`;
-          const filePath = `${fileName}`;
+          const fileName = `${Math.random()}.${fileExt}`;
+          const filePath = `${user?.id}/${fileName}`;
 
           const { error: uploadError } = await supabase.storage
               .from('avatars')
@@ -68,6 +67,19 @@ export default function UserMetaCard() {
           });
 
           if (updateError) throw updateError;
+          
+          // Sync with backend
+          try {
+              await api.post('/auth/sync-user', {
+                  id: user?.id,
+                  email: user?.email,
+                  full_name: user?.user_metadata.full_name,
+                  image: publicUrl 
+              });
+          } catch (syncError) {
+              console.error("Failed to sync avatar to backend:", syncError);
+          }
+
           await refreshUser();
           
       } catch (error: any) {
@@ -113,24 +125,40 @@ export default function UserMetaCard() {
             
             {/* Avatar Section */}
             <div 
-                className="relative w-20 h-20 overflow-hidden border border-gray-200 rounded-full dark:border-gray-800 group cursor-pointer"
+                className="relative w-24 h-24 border-2 border-brand-500/20 rounded-full group cursor-pointer p-1"
                 onClick={() => fileInputRef.current?.click()}
                 title="Click to upload new image"
             >
-              <Image
-                width={80}
-                height={80}
-                src={avatarUrl}
-                alt="user"
-                className="object-cover w-full h-full"
-                unoptimized
-              />
-              <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <div className="w-full h-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                {avatarUrl ? (
+                  <Image
+                    width={96}
+                    height={96}
+                    src={avatarUrl}
+                    alt="user"
+                    className="object-cover w-full h-full shadow-lg"
+                    unoptimized
+                  />
+                ) : (
+                  <div className="text-2xl font-bold text-gray-400 uppercase">
+                    {user.user_metadata?.full_name?.split(' ').map((n: string) => n[0]).join('') || user.email?.charAt(0) || "U"}
+                  </div>
+                )}
+              </div>
+              <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
               </div>
+              
+              <div className="absolute bottom-1 right-1 p-2 bg-brand-500 text-white rounded-full shadow-lg border-2 border-white dark:border-gray-900 group-hover:scale-110 transition-transform">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                  <circle cx="12" cy="13" r="4"></circle>
+                </svg>
+              </div>
+
               <input 
                   type="file" 
                   ref={fileInputRef} 
@@ -207,6 +235,36 @@ export default function UserMetaCard() {
           <form className="flex flex-col" onSubmit={handleSave}>
             <div className="custom-scrollbar max-h-[450px] overflow-y-auto px-2 pb-3">
               <div>
+                <h5 className="mb-5 text-lg font-medium text-gray-800 dark:text-white/90 lg:mb-6">
+                  Profile Picture
+                </h5>
+                <div className="flex items-center gap-5 mb-8">
+                    <div className="relative w-20 h-20 border border-gray-200 rounded-full dark:border-gray-800 flex items-center justify-center bg-gray-50 dark:bg-gray-900 overflow-hidden">
+                        {avatarUrl ? (
+                            <Image
+                                width={80}
+                                height={80}
+                                src={avatarUrl}
+                                alt="preview"
+                                className="object-cover w-full h-full rounded-full"
+                                unoptimized
+                            />
+                        ) : (
+                            <span className="text-xl font-bold text-gray-400 uppercase">
+                                 {user.user_metadata?.full_name?.split(' ').map((n: string) => n[0]).join('') || user.email?.charAt(0) || "U"}
+                            </span>
+                        )}
+                    </div>
+                    <button 
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="px-4 py-2 text-sm font-medium text-brand-500 bg-brand-50 dark:bg-brand-500/10 rounded-lg hover:bg-brand-100 dark:hover:bg-brand-500/20 transition-colors"
+                    >
+                        Change Photo
+                    </button>
+                    <p className="text-xs text-gray-500">JPG, GIF or PNG. Max size of 5MB</p>
+                </div>
+
                 <h5 className="mb-5 text-lg font-medium text-gray-800 dark:text-white/90 lg:mb-6">
                   General Info
                 </h5>
