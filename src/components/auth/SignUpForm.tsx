@@ -205,7 +205,7 @@ export default function SignUpForm() {
         </h1>
         <p className="text-gray-500 dark:text-gray-400">
           {needsVerification 
-            ? `We've sent a 6-digit code to ${email}. Please enter the MOST RECENT code below.` 
+            ? `We've sent a verification code to ${email}. Please enter the MOST RECENT code below.` 
             : "Join thousands of users and start automating today."}
         </p>
       </div>
@@ -328,11 +328,11 @@ export default function SignUpForm() {
              <div>
                 <Label>One-Time Code</Label>
                 <Input
-                    placeholder="123456"
+                    placeholder="12345678"
                     type="text"
                     value={otp}
-                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                    className="text-center tracking-[0.5em] text-lg font-bold"
+                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 8))}
+                    className="text-center tracking-[0.3em] text-lg font-bold"
                     required
                 />
                 <p className="text-sm text-gray-500 mt-2">
