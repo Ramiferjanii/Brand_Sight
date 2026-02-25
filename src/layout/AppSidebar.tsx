@@ -42,6 +42,7 @@ const navItems: NavItem[] = [
     name: "Scraping",
     subItems: [
       { name: "Scraping", path: "/scraping", pro: false },
+      { name: "Scraping Results", path: "/scraping-results", pro: false },
       { name: "Settings", path: "/scraping/settings", pro: false },
       { name: "Products", path: "/products", pro: false },
     ],
