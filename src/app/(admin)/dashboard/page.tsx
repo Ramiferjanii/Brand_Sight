@@ -1,40 +1,46 @@
-import type { Metadata } from "next";
+"use client";
 import { EcommerceMetrics } from "@/components/ecommerce/EcommerceMetrics";
+import { ProductAnalysisCarousel } from "@/components/ecommerce/ProductAnalysisCarousel";
 import React from "react";
 import MonthlyTarget from "@/components/ecommerce/MonthlyTarget";
 import MonthlySalesChart from "@/components/ecommerce/MonthlySalesChart";
-import StatisticsChart from "@/components/ecommerce/StatisticsChart";
-import RecentOrders from "@/components/ecommerce/RecentOrders";
-import DemographicCard from "@/components/ecommerce/DemographicCard";
-
-export const metadata: Metadata = {
-  title: "Dashboard | BrandSight",
-  description: "BrandSight Dashboard",
-};
+import AiDashboardInsights from "@/components/ecommerce/AiDashboardInsights";
+import CategoryPriceChart from "@/components/ecommerce/CategoryPriceChart";
+import ReviewsByDomainChart from "@/components/ecommerce/ReviewsByDomainChart";
+import RatingHistogram from "@/components/ecommerce/RatingHistogram";
+import { useDashboard } from "@/hooks/useDashboard";
 
 export default function Ecommerce() {
+  const { stats, insights, isLoadingStats, isLoadingInsights } = useDashboard();
+
   return (
-    <div className="grid grid-cols-12 gap-4 md:gap-6">
-      <div className="col-span-12 space-y-6 xl:col-span-7">
-        <EcommerceMetrics />
+    <div className="space-y-6">
+      {/* AI Insights Section */}
+      <AiDashboardInsights insights={insights} isLoading={isLoadingInsights} />
 
-        <MonthlySalesChart />
-      </div>
+      <div className="grid grid-cols-12 gap-4 md:gap-6">
+        <div className="col-span-12">
+          <EcommerceMetrics stats={stats} isLoading={isLoadingStats} />
+        </div>
 
-      <div className="col-span-12 xl:col-span-5">
-        <MonthlyTarget />
-      </div>
+        <div className="col-span-12">
+          <ProductAnalysisCarousel />
+        </div>
 
-      <div className="col-span-12">
-        <StatisticsChart />
-      </div>
+        {/* Global Statistical Section */}
+        <div className="col-span-12 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+           <CategoryPriceChart data={stats?.categoryPrices || []} />
+           <ReviewsByDomainChart data={stats?.domainReviews || []} />
+           <RatingHistogram data={stats?.ratingDistribution || []} />
+        </div>
 
-      <div className="col-span-12 xl:col-span-5">
-        <DemographicCard />
-      </div>
+        <div className="col-span-12 xl:col-span-7">
+          <MonthlySalesChart distribution={stats?.domainDistribution || []} />
+        </div>
 
-      <div className="col-span-12 xl:col-span-7">
-        <RecentOrders />
+        <div className="col-span-12 xl:col-span-5">
+          <MonthlyTarget sentiment={stats?.sentimentBreakdown} />
+        </div>
       </div>
     </div>
   );

@@ -35,10 +35,35 @@ const ScrapingResults: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const filteredResults = results.filter(item => 
-    (item.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (item.url || "").toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const flattenedResults: any[] = [];
+  results.forEach(site => {
+    if (site.scrapedData && Array.isArray(site.scrapedData) && site.scrapedData.length > 0) {
+      site.scrapedData.forEach((scrapeItem: any, index: number) => {
+         flattenedResults.push({
+            ...site,
+            id: `${site.id}-${index}`, // unique key per row
+            scrapedData: scrapeItem,
+            displayScrapedAt: scrapeItem.scrapedAt || site.lastScraped
+         });
+      });
+    } else {
+      flattenedResults.push({
+         ...site,
+         displayScrapedAt: site.lastScraped
+      });
+    }
+  });
+
+  const filteredResults = flattenedResults
+    .filter(item => 
+      (item.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (item.url || "").toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .sort((a, b) => {
+       const dateA = a.displayScrapedAt ? new Date(a.displayScrapedAt).getTime() : 0;
+       const dateB = b.displayScrapedAt ? new Date(b.displayScrapedAt).getTime() : 0;
+       return dateB - dateA;
+    });
   const getBadges = (data: any, status: string = 'idle') => {
       if (status === 'in-progress') {
           return (
@@ -148,7 +173,7 @@ const ScrapingResults: React.FC = () => {
                                 {count}
                             </td>
                             <td className="px-4 py-4 text-sm text-gray-500 text-right whitespace-nowrap">
-                                {item.lastScraped ? new Date(item.lastScraped).toLocaleString(undefined, {
+                                {item.displayScrapedAt ? new Date(item.displayScrapedAt).toLocaleString(undefined, {
                                     month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
                                 }) : "Never"}
                             </td>
