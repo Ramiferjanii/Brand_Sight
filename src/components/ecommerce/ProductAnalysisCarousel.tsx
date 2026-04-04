@@ -144,8 +144,8 @@ export const ProductAnalysisCarousel = () => {
 
   const salesActivitySeries = [
     {
-      name: "Review Volume",
-      data: trends.map(t => t.count),
+      name: "Estimated Sales",
+      data: trends.map(t => t.count * 85), // Estimated 85 sales per review
     },
   ];
 
@@ -197,7 +197,7 @@ export const ProductAnalysisCarousel = () => {
                 onClick={() => setSelectedProduct(product)}
                 className={`cursor-pointer rounded-xl border-2 transition-all p-4 mb-6 ${
                   selectedProduct?.id === product.id
-? "border-brand-500 bg-brand-50 dark:bg-brand-500/10"
+                    ? "border-brand-500 bg-brand-50 dark:bg-brand-500/10"
                     : "border-gray-100 bg-white hover:border-brand-200 dark:border-gray-800 dark:bg-gray-900"
                 }`}
               >
@@ -244,7 +244,7 @@ export const ProductAnalysisCarousel = () => {
                 )}
               </div>
               <div className="flex flex-col items-center">
-                <span className="mb-4 text-sm font-medium text-gray-500">Review Volume (Years)</span>
+                <span className="mb-4 text-sm font-medium text-gray-500">Estimated Sales (Volume)</span>
                 {isLoadingTrends ? (
                   <div className="h-[200px] w-full animate-pulse bg-gray-100 rounded-lg"></div>
                 ) : (

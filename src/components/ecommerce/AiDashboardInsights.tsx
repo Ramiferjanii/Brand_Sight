@@ -28,7 +28,7 @@ export default function AiDashboardInsights({ insights, isLoading }: AiInsightsP
   if (!insights) return null;
 
   return (
-    <div className="rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50/50 to-indigo-50/50 p-6 dark:border-blue-900/30 dark:from-blue-900/10 dark:to-indigo-900/10">
+    <div data-tour="ai-insights" className="rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50/50 to-indigo-50/50 p-6 dark:border-blue-900/30 dark:from-blue-900/10 dark:to-indigo-900/10">
       <div className="flex items-center gap-2 mb-4">
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white">
           <ShootingStarIcon className="h-5 w-5" />

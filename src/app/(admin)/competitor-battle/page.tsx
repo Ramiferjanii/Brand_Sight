@@ -10,6 +10,42 @@ import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
 import "swiper/css/effect-coverflow";
+import PageTour, { TourStep } from "@/components/tour/PageTour";
+
+const battleTourSteps: TourStep[] = [
+  {
+    target: "body",
+    placement: "center",
+    disableBeacon: true,
+    title: "Competitor Battle ⚔️",
+    content: "Pick two products and go head-to-head! Our engine compares prices, ratings and market position. Let's see how it works.",
+    data: { emoji: "⚔️" },
+  },
+  {
+    target: "[data-tour='battle-carousel']",
+    placement: "bottom",
+    disableBeacon: true,
+    title: "Product Carousel 🎠",
+    content: "Swipe through all scraped products and click one to add it to the battle. The first click sets Side A, the second sets Side B.",
+    data: { emoji: "🎠" },
+  },
+  {
+    target: "[data-tour='battle-side-a']",
+    placement: "right",
+    disableBeacon: true,
+    title: "Side A — Contender 🥊",
+    content: "Your first product slot. You can also type in the search box to find a specific product quickly.",
+    data: { emoji: "🥊" },
+  },
+  {
+    target: "[data-tour='battle-side-b']",
+    placement: "left",
+    disableBeacon: true,
+    title: "Side B — Competitor 🥊",
+    content: "Your second product slot. Once both sides are filled, the comparison stats appear automatically below.",
+    data: { emoji: "🥊" },
+  },
+];
 
 interface ProductComparison {
   id: string;
@@ -87,17 +123,20 @@ export default function CompetitorBattle() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-bold text-gray-800 dark:text-white/90">
-          Competitor Battle ⚔️
-        </h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          Compare two products side-by-side. Click a product below to add it to the battle!
-        </p>
+      <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-2xl font-bold text-gray-800 dark:text-white/90">
+            Competitor Battle ⚔️
+          </h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Compare two products side-by-side. Click a product below to add it to the battle!
+          </p>
+        </div>
+        <PageTour steps={battleTourSteps} />
       </div>
 
       {/* Product Carousel Selection */}
-      <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03]">
+      <div data-tour="battle-carousel" className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03]">
         <Swiper
            modules={[Navigation, Pagination, EffectCoverflow]}
            effect={"coverflow"}
@@ -146,7 +185,7 @@ export default function CompetitorBattle() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
         {/* Product A Selection */}
-        <div className="space-y-4">
+        <div className="space-y-4" data-tour="battle-side-a">
           <ComponentCard title="Side A: Contender">
             <div className="relative pt-2">
               <input
@@ -198,7 +237,7 @@ export default function CompetitorBattle() {
         </div>
 
         {/* Product B Selection */}
-        <div className="space-y-4">
+        <div className="space-y-4" data-tour="battle-side-b">
           <ComponentCard title="Side B: Competitor">
             <div className="relative pt-2">
               <input

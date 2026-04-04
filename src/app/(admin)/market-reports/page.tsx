@@ -3,6 +3,34 @@ import React, { useState } from "react";
 import ComponentCard from "@/components/common/ComponentCard";
 import { useReports } from "@/hooks/useReports";
 import { BoxCubeIcon, PieChartIcon, HorizontaLDots } from "@/icons";
+import PageTour, { TourStep } from "@/components/tour/PageTour";
+
+const reportsTourSteps: TourStep[] = [
+  {
+    target: "body",
+    placement: "center",
+    disableBeacon: true,
+    title: "AI Market Reports 🧠",
+    content: "Generate professional market analysis reports powered by Groq Llama 3 AI. Let's walk through how it works.",
+    data: { emoji: "🧠" },
+  },
+  {
+    target: "[data-tour='reports-generator']",
+    placement: "right",
+    disableBeacon: true,
+    title: "Report Generator ⚙️",
+    content: "Select a product category from the dropdown, then click Generate. The AI will analyse all scraped data for that category.",
+    data: { emoji: "⚙️" },
+  },
+  {
+    target: "[data-tour='reports-output']",
+    placement: "left",
+    disableBeacon: true,
+    title: "Report Output 📊",
+    content: "Your generated report appears here with market mood, key strengths & weaknesses, pricing insight and an analyst verdict.",
+    data: { emoji: "📊" },
+  },
+];
 
 export default function MarketReports() {
   const { categories, report, isGenerating, error, generateReport } = useReports();
@@ -15,18 +43,21 @@ export default function MarketReports() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-bold text-gray-800 dark:text-white/90">
-          AI Market Reports
-        </h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          Analyze market trends and customer satisfaction for specific categories using Groq Llama 3.
-        </p>
+      <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-2xl font-bold text-gray-800 dark:text-white/90">
+            AI Market Reports
+          </h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Analyze market trends and customer satisfaction for specific categories using Groq Llama 3.
+          </p>
+        </div>
+        <PageTour steps={reportsTourSteps} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
         {/* Selection Card */}
-        <div className="md:col-span-4">
+        <div className="md:col-span-4" data-tour="reports-generator">
           <ComponentCard title="Generate New Report">
             <div className="space-y-4 pt-4">
               <div>
@@ -70,7 +101,7 @@ export default function MarketReports() {
         </div>
 
         {/* Report Card */}
-        <div className="md:col-span-8">
+        <div className="md:col-span-8" data-tour="reports-output">
           <ComponentCard title="Professional Market Insight">
             {report ? (
               <div className="space-y-6 animate-fadeIn">

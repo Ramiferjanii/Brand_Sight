@@ -6,8 +6,36 @@ import ComponentCard from '@/components/common/ComponentCard';
 import Input from '@/components/form/input/InputField';
 import Button from '@/components/ui/button/Button';
 import api from '@/lib/api';
+import PageTour, { TourStep } from '@/components/tour/PageTour';
 
-// Simple Range Slider could be added later, using inputs for now
+const productsTourSteps: TourStep[] = [
+  {
+    target: 'body',
+    placement: 'center',
+    disableBeacon: true,
+    title: 'Products Catalog 🛍️',
+    content: "Browse all products collected by the scraper. Use filters to narrow down by name, price range or category.",
+    data: { emoji: '🛍️' },
+  },
+  {
+    target: "[data-tour='products-filters']",
+    placement: 'right',
+    disableBeacon: true,
+    title: 'Filter Panel 🔍',
+    content: 'Search by keyword, set a price range, or select a category. Hit Apply Filters to update the grid.',
+    data: { emoji: '🔍' },
+  },
+  {
+    target: "[data-tour='products-grid']",
+    placement: 'left',
+    disableBeacon: true,
+    title: 'Product Grid 🗂️',
+    content: 'Matching products appear here. Click any card to see full details, reviews and AI analysis.',
+    data: { emoji: '🗂️' },
+  },
+];
+
+
 export default function ProductsPage() {
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
@@ -59,11 +87,12 @@ export default function ProductsPage() {
         <div className="p-6">
             <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Products</h1>
+                <PageTour steps={productsTourSteps} />
             </div>
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
                 {/* Filters Sidebar */}
-                <div className="lg:col-span-1">
+                <div className="lg:col-span-1" data-tour="products-filters">
                     <ComponentCard title="Filters" className="sticky top-6">
                         <form onSubmit={handleSearch} className="space-y-4">
                             <div>
@@ -127,7 +156,7 @@ export default function ProductsPage() {
                 </div>
 
                 {/* Product Grid */}
-                <div className="lg:col-span-3">
+                <div className="lg:col-span-3" data-tour="products-grid">
                     {loading ? (
                        <div className="flex h-64 items-center justify-center">
                            <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-brand-500"></div>

@@ -5,7 +5,6 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSidebar } from "../context/SidebarContext";
 import {
-  BoxCubeIcon,
   CalenderIcon,
   ChevronDownIcon,
   GridIcon,
@@ -21,6 +20,7 @@ type NavItem = {
   name: string;
   icon: React.ReactNode;
   path?: string;
+  tourId?: string;
   subItems?: { name: string; path: string; pro?: boolean; new?: boolean }[];
 };
 
@@ -33,6 +33,7 @@ const navItems: NavItem[] = [
   {
     icon: <PlugInIcon />,
     name: "Scraping Hub",
+    tourId: "sidebar-scraping",
     subItems: [
       { name: "Scraping Tasks", path: "/scraping", pro: false },
       { name: "Scraping Results", path: "/scraping-results", pro: false },
@@ -43,17 +44,10 @@ const navItems: NavItem[] = [
   {
     icon: <PieChartIcon />,
     name: "Analysis & Reports",
+    tourId: "sidebar-analysis",
     subItems: [
       { name: "Competitor Battle", path: "/competitor-battle", pro: false },
       { name: "Market Reports (AI)", path: "/market-reports", pro: false },
-    ],
-  },
-  {
-    icon: <BoxCubeIcon />,
-    name: "Price Tracking",
-    subItems: [
-      { name: "Price Tracker", path: "/price-tracker", pro: false },
-      { name: "Price Alarms", path: "/price-alarms", pro: false },
     ],
   },
   {
@@ -87,6 +81,7 @@ const AppSidebar: React.FC = () => {
         <li key={nav.name}>
           {nav.subItems ? (
             <button
+              data-tour={nav.tourId}
               onClick={() => handleSubmenuToggle(index, menuType)}
               className={`menu-item group  ${
                 openSubmenu?.type === menuType && openSubmenu?.index === index
@@ -270,6 +265,7 @@ const AppSidebar: React.FC = () => {
 
   return (
     <aside
+      data-tour="sidebar"
       className={`fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 left-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-r border-gray-200 
         ${
           isExpanded || isMobileOpen

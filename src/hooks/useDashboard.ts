@@ -16,6 +16,10 @@ export interface DashboardStats {
         domain: string;
         count: number;
     }>;
+    monthlySales: Array<{
+        month: string;
+        sales: number;
+    }>;
     categoryPrices: Array<{
         category: string;
         avgPrice: number;
@@ -37,11 +41,26 @@ export interface DashboardInsights {
     tips: string[];
 }
 
+export interface SalesVolumeResponse {
+    success: boolean;
+    groupBy: string | null;
+    months: number;
+    data?: Array<{ month: string; estimatedSales: number; reviewCount: number }>;
+    series?: Array<{
+        groupValue: string;
+        data: Array<{ month: string; estimatedSales: number; reviewCount: number }>;
+    }>;
+    totals?: Array<{ month: string; estimatedSales: number; reviewCount: number }>;
+}
+
 export function useDashboard() {
     const [stats, setStats] = useState<DashboardStats | null>(null);
     const [insights, setInsights] = useState<DashboardInsights | null>(null);
+    const [salesVolume, setSalesVolume] = useState<SalesVolumeResponse | null>(null);
+    
     const [isLoadingStats, setIsLoadingStats] = useState(false);
     const [isLoadingInsights, setIsLoadingInsights] = useState(false);
+    const [isLoadingSalesVolume, setIsLoadingSalesVolume] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const fetchStats = useCallback(async () => {
@@ -70,6 +89,23 @@ export function useDashboard() {
         }
     }, []);
 
+    const fetchSalesVolume = useCallback(async (months = 6, groupBy?: 'category' | 'domain') => {
+        setIsLoadingSalesVolume(true);
+        try {
+            const params = new URLSearchParams({ months: months.toString() });
+            if (groupBy) params.append('groupBy', groupBy);
+            
+            const res = await api.get(`/dashboard/sales-volume?${params.toString()}`);
+            setSalesVolume(res.data);
+            return res.data;
+        } catch (err: any) {
+            console.error('Failed to load sales volume:', err);
+            return null;
+        } finally {
+            setIsLoadingSalesVolume(false);
+        }
+    }, []);
+
     useEffect(() => {
         fetchStats();
         fetchInsights();
@@ -78,9 +114,12 @@ export function useDashboard() {
     return {
         stats,
         insights,
+        salesVolume,
         isLoadingStats,
         isLoadingInsights,
+        isLoadingSalesVolume,
         error,
+        fetchSalesVolume,
         refresh: () => {
             fetchStats();
             fetchInsights();

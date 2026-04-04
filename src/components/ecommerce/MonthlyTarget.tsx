@@ -16,9 +16,10 @@ interface SentimentProps {
     neutral: number;
     negative: number;
   };
+  onRefresh?: () => void;
 }
 
-export default function MonthlyTarget({ sentiment }: SentimentProps) {
+export default function MonthlyTarget({ sentiment, onRefresh }: SentimentProps) {
   const data = React.useMemo(() => [
     Number(sentiment?.positive || 0),
     Number(sentiment?.neutral || 0),
@@ -92,7 +93,10 @@ export default function MonthlyTarget({ sentiment }: SentimentProps) {
             <MoreDotIcon className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-300" />
           </button>
           <Dropdown isOpen={isOpen} onClose={() => setIsOpen(false)} className="w-40 p-2">
-            <DropdownItem onItemClick={() => setIsOpen(false)}>Recalculate</DropdownItem>
+            <DropdownItem onItemClick={() => {
+                setIsOpen(false);
+                if (onRefresh) onRefresh();
+            }}>Recalculate Data</DropdownItem>
           </Dropdown>
         </div>
       </div>
