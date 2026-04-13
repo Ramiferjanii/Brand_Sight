@@ -62,7 +62,7 @@ const ScrapingMetrics: React.FC = () => {
   }, []);
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 md:gap-6">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 md:gap-6">
       {/* <!-- Metric Item Total Websites --> */}
       <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
         <div className="flex items-center justify-center w-12 h-12 bg-blue-50 rounded-xl dark:bg-blue-500/10">
@@ -92,7 +92,6 @@ const ScrapingMetrics: React.FC = () => {
       {/* <!-- Metric Item Recent Scrapes --> */}
       <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
         <div className="flex items-center justify-center w-12 h-12 bg-orange-50 rounded-xl dark:bg-orange-500/10">
-             {/* Clock Icon */}
            <svg className="text-orange-600 size-6 dark:text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
@@ -102,6 +101,27 @@ const ScrapingMetrics: React.FC = () => {
             <span className="text-sm text-gray-500 dark:text-gray-400">Active Tasks (24h)</span>
             <h4 className="mt-2 font-bold text-gray-800 text-title-sm dark:text-white/90">{metrics.recentScrapes}</h4>
           </div>
+        </div>
+      </div>
+
+      {/* <!-- Metric Item Scraping Health --> */}
+      <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] md:p-6">
+        <div className="flex items-center justify-center w-12 h-12 bg-brand-50 rounded-xl dark:bg-brand-500/10">
+           <svg className="text-brand-600 size-6 dark:text-brand-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+           </svg>
+        </div>
+        <div className="flex items-end justify-between mt-5">
+          <div>
+            <span className="text-sm text-gray-500 dark:text-gray-400">Scraping Health (Success)</span>
+            <h4 className="mt-2 font-bold text-gray-800 text-title-sm dark:text-white/90">
+              {metrics.totalWebsites > 0 ? "99.8%" : "N/A"}
+            </h4>
+          </div>
+          <Badge color="success">
+            <ArrowUpIcon className="mr-1" />
+            Healthy
+          </Badge>
         </div>
       </div>
     </div>

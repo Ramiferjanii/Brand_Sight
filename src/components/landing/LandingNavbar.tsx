@@ -3,9 +3,11 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import Button from "@/components/ui/button/Button";
+import { useAuth } from "@/context/AuthContext";
 
 const LandingNavbar: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
+  const { user, isLoading } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -55,16 +57,26 @@ const LandingNavbar: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-3">
-          <Link href="/signin">
-            <Button variant="outline" size="sm" className="hidden sm:inline-flex">
-              Sign In
-            </Button>
-          </Link>
-          <Link href="/signup">
-            <Button size="sm">
-              Get Started
-            </Button>
-          </Link>
+          {!isLoading && user ? (
+            <Link href="/dashboard">
+              <Button size="sm">
+                Go to Dashboard
+              </Button>
+            </Link>
+          ) : !isLoading ? (
+            <>
+              <Link href="/signin">
+                <Button variant="outline" size="sm" className="hidden sm:inline-flex">
+                  Sign In
+                </Button>
+              </Link>
+              <Link href="/signup">
+                <Button size="sm">
+                  Get Started
+                </Button>
+              </Link>
+            </>
+          ) : null}
         </div>
       </div>
     </nav>

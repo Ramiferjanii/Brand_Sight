@@ -43,7 +43,7 @@ const LandingFooter: React.FC = () => {
           <div>
             <h4 className="font-bold text-gray-900 dark:text-white mb-6">Company</h4>
             <ul className="space-y-4">
-              <li><Link href="#" className="text-gray-500 hover:text-brand-500 dark:hover:text-brand-400 transition-colors">About Us</Link></li>
+              <li><Link href="/about" className="text-gray-500 hover:text-brand-500 dark:hover:text-brand-400 transition-colors">About Us</Link></li>
               <li><Link href="#" className="text-gray-500 hover:text-brand-500 dark:hover:text-brand-400 transition-colors">Careers</Link></li>
               <li><Link href="#" className="text-gray-500 hover:text-brand-500 dark:hover:text-brand-400 transition-colors">Contact</Link></li>
             </ul>

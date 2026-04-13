@@ -4,6 +4,7 @@ import LandingFeatures from "@/components/landing/LandingFeatures";
 import LandingTestimonials from "@/components/landing/LandingTestimonials";
 import { Metadata } from "next";
 import Link from "next/link";
+import LandingCTAAuthButtons from "@/components/landing/LandingCTAAuthButtons";
 
 export const metadata: Metadata = {
   title: "BrandSight | The Ultimate Web Scraping Platform",
@@ -84,16 +85,7 @@ export default function LandingPage() {
                 Join teams using BrandSight to power their business intelligence.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <Link href="/signup">
-                  <button className="h-12 px-8 rounded-lg bg-brand-500 text-white font-bold hover:bg-brand-600 transition-all shadow-lg shadow-brand-500/25">
-                    Get Started for Free
-                  </button>
-                </Link>
-                <Link href="/signin">
-                  <button className="h-12 px-8 rounded-lg bg-white/10 text-white font-bold hover:bg-white/20 transition-all backdrop-blur-md border border-white/10">
-                    Sign In instead
-                  </button>
-                </Link>
+                <LandingCTAAuthButtons />
               </div>
             </div>
           </div>

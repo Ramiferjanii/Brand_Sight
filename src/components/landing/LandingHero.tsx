@@ -4,7 +4,11 @@ import Link from "next/link";
 import Button from "@/components/ui/button/Button";
 import { ArrowRightIcon } from "@/icons";
 
+import { useAuth } from "@/context/AuthContext";
+
 const LandingHero: React.FC = () => {
+  const { user, isLoading } = useAuth();
+  
   return (
     <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
       {/* Background Decorative Elements */}
@@ -31,11 +35,19 @@ const LandingHero: React.FC = () => {
           </p>
           
           <div className="flex flex-col sm:flex-row items-center gap-4">
-            <Link href="/signup">
-              <Button className="h-12 px-8 text-base shadow-lg shadow-brand-500/20" endIcon={<ArrowRightIcon />}>
-                Get Started
-              </Button>
-            </Link>
+            {!isLoading && user ? (
+              <Link href="/dashboard">
+                <Button className="h-12 px-8 text-base shadow-lg shadow-brand-500/20" endIcon={<ArrowRightIcon />}>
+                  Go to Dashboard
+                </Button>
+              </Link>
+            ) : !isLoading ? (
+              <Link href="/signup">
+                <Button className="h-12 px-8 text-base shadow-lg shadow-brand-500/20" endIcon={<ArrowRightIcon />}>
+                  Get Started
+                </Button>
+              </Link>
+            ) : null}
             <Link href="#features">
               <Button variant="outline" className="h-12 px-8 text-base border-gray-200 dark:border-gray-800">
                 View Features

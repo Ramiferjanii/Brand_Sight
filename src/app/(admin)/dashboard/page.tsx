@@ -2,11 +2,8 @@
 import { EcommerceMetrics } from "@/components/ecommerce/EcommerceMetrics";
 import { ProductAnalysisCarousel } from "@/components/ecommerce/ProductAnalysisCarousel";
 import React from "react";
-import MonthlyTarget from "@/components/ecommerce/MonthlyTarget";
 import MonthlySalesChart from "@/components/ecommerce/MonthlySalesChart";
 import AiDashboardInsights from "@/components/ecommerce/AiDashboardInsights";
-import CategoryPriceChart from "@/components/ecommerce/CategoryPriceChart";
-import RatingHistogram from "@/components/ecommerce/RatingHistogram";
 import { useDashboard } from "@/hooks/useDashboard";
 import PageTour, { TourStep } from "@/components/tour/PageTour";
 
@@ -42,31 +39,7 @@ const dashboardTourSteps: TourStep[] = [
     title: "Product Analysis Carousel",
     content: "Browse individual product cards and their AI verdicts, deal scores and review breakdowns here.",
     data: { emoji: "🎠" },
-  },
-  {
-    target: "[data-tour='dashboard-charts']",
-    placement: "top",
-    disableBeacon: true,
-    title: "Category & Rating Charts 🥧",
-    content: "Visualize average price per category and the rating distribution across all scraped products.",
-    data: { emoji: "🥧" },
-  },
-  {
-    target: "[data-tour='dashboard-sales']",
-    placement: "top",
-    disableBeacon: true,
-    title: "Monthly Sales Trend 📅",
-    content: "Track estimated sales volume over time based on review activity trends.",
-    data: { emoji: "📅" },
-  },
-  {
-    target: "[data-tour='dashboard-target']",
-    placement: "left",
-    disableBeacon: true,
-    title: "Sentiment & Target 🎯",
-    content: "See the overall sentiment breakdown (positive vs negative) and trigger a data recalculation here.",
-    data: { emoji: "🎯" },
-  },
+  }
 ];
 
 export default function Ecommerce() {
@@ -94,23 +67,13 @@ export default function Ecommerce() {
           <ProductAnalysisCarousel />
         </div>
 
-        {/* Global Statistical Section */}
-        <div className="col-span-12 grid grid-cols-1 gap-6 md:grid-cols-2" data-tour="dashboard-charts">
-           <CategoryPriceChart data={stats?.categoryPrices || []} />
-           <RatingHistogram data={stats?.ratingDistribution || []} />
-        </div>
-
-        <div className="col-span-12 xl:col-span-7" data-tour="dashboard-sales">
+        <div className="col-span-12" data-tour="dashboard-sales">
           <MonthlySalesChart 
             salesVolume={salesVolume}
             isLoading={isLoadingSalesVolume}
             fetchSalesVolume={fetchSalesVolume}
             fallbackData={stats?.monthlySales || []} 
           />
-        </div>
-
-        <div className="col-span-12 xl:col-span-5" data-tour="dashboard-target">
-          <MonthlyTarget sentiment={stats?.sentimentBreakdown} onRefresh={refresh} />
         </div>
       </div>
     </div>
