@@ -8,6 +8,7 @@ import AppHeader from "@/layout/AppHeader";
 import AppSidebar from "@/layout/AppSidebar";
 import Backdrop from "@/layout/Backdrop";
 import ProductTour from "@/components/tour/ProductTour";
+import { FloatingChatbot } from "@/components/chat/FloatingChatbot";
 import React, { useEffect } from "react";
 
 export default function AdminLayout({
@@ -47,6 +48,7 @@ export default function AdminLayout({
   return (
     <TourProvider>
       <ProductTour />
+      <FloatingChatbot />
       <div className="min-h-screen xl:flex">
         {/* Sidebar and Backdrop */}
         <AppSidebar />

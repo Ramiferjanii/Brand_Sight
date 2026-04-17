@@ -3,6 +3,7 @@ import { ThemeToggleButton } from "@/components/common/ThemeToggleButton";
 import NotificationDropdown from "@/components/header/NotificationDropdown";
 import UserDropdown from "@/components/header/UserDropdown";
 import TourButton from "@/components/tour/TourButton";
+import HelpCenterButton from "@/components/header/HelpCenterButton";
 import { useSidebar } from "@/context/SidebarContext";
 import Image from "next/image";
 import Link from "next/link";
@@ -168,6 +169,8 @@ const AppHeader: React.FC = () => {
             <ThemeToggleButton />
             {/* Notification Menu */}
             <NotificationDropdown />
+            {/* Help Center Button */}
+            <HelpCenterButton />
             {/* Platform Tour Button */}
             <TourButton />
           </div>

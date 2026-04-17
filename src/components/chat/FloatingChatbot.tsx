@@ -22,6 +22,13 @@ export const FloatingChatbot: React.FC = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages, isOpen]);
 
+    // Listen for Help Center "Open AI Assistant" button
+    useEffect(() => {
+        const handleOpenChatbot = () => setIsOpen(true);
+        window.addEventListener('open-ai-chatbot', handleOpenChatbot);
+        return () => window.removeEventListener('open-ai-chatbot', handleOpenChatbot);
+    }, []);
+
     // Listen for product-specific chat triggers from other components
     useEffect(() => {
         const handleProductChat = (e: any) => {

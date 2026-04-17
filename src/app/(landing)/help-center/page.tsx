@@ -42,12 +42,20 @@ export default function HelpCenterPage() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [topQuestions, setTopQuestions] = useState<{ question: string; count: number }[]>([]);
 
   useEffect(() => {
     if (messages.length > 1) {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
   }, [messages]);
+
+  // Fetch top asked questions for the sidebar
+  useEffect(() => {
+    api.get('/chat/top-questions')
+      .then(res => { if (res.data?.questions) setTopQuestions(res.data.questions); })
+      .catch(() => {});
+  }, []);
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,10 +67,19 @@ export default function HelpCenterPage() {
     setMessages(newMessages);
     setIsLoading(true);
 
+    // Save question to shared DB so Help Center dashboard shows it
+    try {
+      await api.post('/chat', { messages: newMessages });
+    } catch (_) { /* ignore — just tracking */ }
+
     try {
       const res = await api.post('/chatbot/query', { message: userMsg });
       if (res.data.answer) {
         setMessages([...newMessages, { role: 'assistant', content: res.data.answer }]);
+        // Refresh top questions after new one is saved
+        api.get('/chat/top-questions')
+          .then(r => { if (r.data?.questions) setTopQuestions(r.data.questions); })
+          .catch(() => {});
       }
     } catch (error) {
       console.error('Chat error:', error);
@@ -122,8 +139,36 @@ export default function HelpCenterPage() {
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5, delay: 0.1 }}
-        className="backdrop-blur-xl bg-white/70 rounded-[2rem] shadow-[0_15px_50px_-12px_rgba(0,0,0,0.1)] border border-white w-full max-w-4xl overflow-hidden flex flex-col h-[70vh] min-h-[600px] z-10"
+        className="w-full max-w-5xl z-10 flex flex-col lg:flex-row gap-6"
       >
+        {/* ── Top Questions Sidebar ── */}
+        {topQuestions.length > 0 && (
+          <div className="lg:w-64 flex-shrink-0">
+            <div className="backdrop-blur-xl bg-white/70 rounded-2xl border border-white shadow-[0_15px_50px_-12px_rgba(0,0,0,0.08)] p-5">
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-base font-bold text-indigo-700">🔥 Most Asked</span>
+                <span className="text-[10px] bg-indigo-600 text-white px-2 py-0.5 rounded-full font-semibold">LIVE</span>
+              </div>
+              <ul className="space-y-2">
+                {topQuestions.map((q, i) => (
+                  <li key={i}>
+                    <button
+                      onClick={() => setInput(q.question)}
+                      title="Click to use this question"
+                      className="w-full text-left text-xs text-gray-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 rounded-xl px-3 py-2.5 transition-all flex justify-between items-start gap-2 group"
+                    >
+                      <span className="leading-snug group-hover:text-indigo-700">{q.question}</span>
+                      <span className="flex-shrink-0 text-[10px] bg-white text-indigo-500 border border-indigo-100 rounded-full px-1.5 py-0.5 font-semibold">×{q.count}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        )}
+
+        {/* ── Chat Window ── */}
+        <div className="flex-1 backdrop-blur-xl bg-white/70 rounded-[2rem] shadow-[0_15px_50px_-12px_rgba(0,0,0,0.1)] border border-white overflow-hidden flex flex-col h-[70vh] min-h-[600px]">
         {/* Messages Area */}
         <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-8 scroll-smooth hide-scrollbar">
           <AnimatePresence>
@@ -202,6 +247,7 @@ export default function HelpCenterPage() {
               <SendIcon />
             </motion.button>
           </form>
+        </div>
         </div>
       </motion.div>
       
