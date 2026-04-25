@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Product } from '@/types/product';
 import { ProductCard } from '@/components/products/ProductCard';
+import EmptyState from '@/components/common/EmptyState';
 import ComponentCard from '@/components/common/ComponentCard';
 import Input from '@/components/form/input/InputField';
 import Button from '@/components/ui/button/Button';
@@ -48,16 +49,22 @@ export default function ProductsPage() {
     const [maxPrice, setMaxPrice] = useState('');
     const [category, setCategory] = useState('');
 
-    const fetchProducts = async () => {
+    const fetchProducts = async (overrides?: { page?: number; search?: string; minPrice?: string; maxPrice?: string; category?: string }) => {
         setLoading(true);
         try {
+            const p = overrides?.page ?? page;
+            const s = overrides?.search ?? search;
+            const min = overrides?.minPrice ?? minPrice;
+            const max = overrides?.maxPrice ?? maxPrice;
+            const cat = overrides?.category ?? category;
+
             const params = new URLSearchParams();
-            params.append('page', page.toString());
+            params.append('page', p.toString());
             params.append('limit', '12');
-            if (search) params.append('name', search);
-            if (minPrice) params.append('minPrice', minPrice);
-            if (maxPrice) params.append('maxPrice', maxPrice);
-            if (category) params.append('category', category);
+            if (s) params.append('name', s);
+            if (min) params.append('minPrice', min);
+            if (max) params.append('maxPrice', max);
+            if (cat) params.append('category', cat);
 
             const res = await api.get(`/products?${params.toString()}`);
             const data = res.data;
@@ -74,13 +81,15 @@ export default function ProductsPage() {
     };
 
     useEffect(() => {
-        fetchProducts();
+        fetchProducts({ page });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [page]); // Trigger on page change
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
-        setPage(1); // Reset to page 1 on search
-        fetchProducts();
+        setPage(1);
+        // Pass current filter values directly — avoids stale state reads after setPage(1)
+        fetchProducts({ page: 1, search, minPrice, maxPrice, category });
     };
 
     return (
@@ -148,7 +157,7 @@ export default function ProductsPage() {
                                 </select>
                             </div>
 
-                            <Button className="w-full justify-center">
+                            <Button type="submit" className="w-full justify-center">
                                 Apply Filters
                             </Button>
                         </form>
@@ -162,10 +171,18 @@ export default function ProductsPage() {
                            <div className="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-brand-500"></div>
                        </div>
                     ) : products.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-300 bg-gray-50 p-12 text-center dark:border-gray-700 dark:bg-gray-800/50">
-                            <h3 className="text-lg font-medium text-gray-900 dark:text-white">No products found</h3>
-                            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Try adjusting your filters or scrape some websites.</p>
-                        </div>
+                        <EmptyState 
+                            title="No products found"
+                            description="We couldn't find any products matching your current filters. Try adjusting your price range or search terms."
+                            onReset={() => {
+                                setSearch('');
+                                setMinPrice('');
+                                setMaxPrice('');
+                                setCategory('');
+                                setPage(1);
+                                fetchProducts({ page: 1, search: '', minPrice: '', maxPrice: '', category: '' });
+                            }}
+                        />
                     ) : (
                         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
                             {products.map((product) => (

@@ -665,6 +665,21 @@ span.flatpickr-weekday,
   @apply !h-auto !w-auto;
 }
 
+/* Fix for product carousel click hitboxes (DOM order vs 3D transform) */
+.product-swiper .swiper-slide {
+  z-index: 10 !important;
+  pointer-events: auto !important;
+}
+.product-swiper .swiper-slide-prev,
+.product-swiper .swiper-slide-next {
+  z-index: 20 !important;
+  pointer-events: auto !important;
+}
+.product-swiper .swiper-slide-active {
+  z-index: 30 !important;
+  pointer-events: auto !important;
+}
+
 .carouselTwo .swiper-button-next:after,
 .carouselTwo .swiper-button-prev:after,
 .carouselFour .swiper-button-next:after,

@@ -161,6 +161,17 @@ export const ProductAnalysisCarousel = () => {
 
   return (
     <div className="space-y-6">
+      <style>{`
+        .product-swiper .swiper-button-next,
+        .product-swiper .swiper-button-prev {
+          z-index: 50;
+          pointer-events: auto;
+        }
+        .product-swiper .swiper-slide {
+          pointer-events: auto;
+          cursor: pointer;
+        }
+      `}</style>
       {/* Product Carousel */}
       <div className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-white/[0.03]">
         <h3 className="mb-6 text-lg font-semibold text-gray-800 dark:text-white/90">
@@ -184,7 +195,14 @@ export const ProductAnalysisCarousel = () => {
             dynamicBullets: true 
           }}
           navigation={true}
-          className="product-swiper !pb-16 pt-4"
+          slideToClickedSlide={true}
+          preventClicks={false}
+          preventClicksPropagation={false}
+          touchStartPreventDefault={false}
+          onSlideChange={(swiper) => {
+            setSelectedProduct(products[swiper.activeIndex]);
+          }}
+          className="product-swiper !pb-16 pt-4 cursor-default"
           breakpoints={{
             640: { slidesPerView: 2 },
             1024: { slidesPerView: 3 },
@@ -194,10 +212,13 @@ export const ProductAnalysisCarousel = () => {
           {products.map((product) => (
             <SwiperSlide key={product.id} className="p-2">
               <div
-                onClick={() => setSelectedProduct(product)}
-                className={`cursor-pointer rounded-xl border-2 transition-all p-4 mb-6 ${
+                onClick={() => {
+                  console.log("Product clicked:", product.name);
+                  setSelectedProduct(product);
+                }}
+                className={`relative z-20 pointer-events-auto !cursor-pointer rounded-xl border-2 transition-all p-4 mb-6 ${
                   selectedProduct?.id === product.id
-                    ? "border-brand-500 bg-brand-50 dark:bg-brand-500/10"
+                    ? "border-brand-500 bg-brand-50 dark:bg-brand-500/10 shadow-lg"
                     : "border-gray-100 bg-white hover:border-brand-200 dark:border-gray-800 dark:bg-gray-900"
                 }`}
               >

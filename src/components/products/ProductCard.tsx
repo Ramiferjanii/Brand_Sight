@@ -13,6 +13,24 @@ interface ProductCardProps {
 export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     const [showReviews, setShowReviews] = useState(false);
     
+    // Robust Price Parsing for old/new combinations
+    const getCleanPrices = () => {
+        let displayPrice = product.price || 'N/A';
+        let displayOldPrice = product.oldPrice || '';
+
+        // If the main price field contains multiple prices (legacy data)
+        if (displayPrice.includes('DT') && displayPrice.split('DT').length > 2) {
+            const parts = displayPrice.split('DT').filter(p => p.trim() !== '').map(p => p.trim() + ' DT');
+            if (parts.length >= 2) {
+                displayPrice = parts[0];
+                displayOldPrice = parts[1];
+            }
+        }
+        return { displayPrice, displayOldPrice };
+    };
+
+    const { displayPrice, displayOldPrice } = getCleanPrices();
+    
     // Deal Analysis State
     const [dealStatus, setDealStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
     const [dealData, setDealData] = useState<{ rating: string; explanation: string } | null>(null);
@@ -94,9 +112,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                                         : 'N/A'}
                                 </p>
                             </div>
-                            <div className="text-right">
-                                <p className="text-lg font-bold text-brand-600 dark:text-brand-400">
-                                    {product.price !== 'Not found' ? product.price : 'N/A'}
+                            <div className="text-right flex flex-col items-end">
+                                {displayOldPrice && displayOldPrice !== '' && (
+                                    <p className="text-[10px] font-medium text-gray-400 line-through decoration-red-500 decoration-2 leading-none mb-1">
+                                        {displayOldPrice}
+                                    </p>
+                                )}
+                                <p className="text-lg font-bold text-brand-600 dark:text-brand-400 leading-none">
+                                    {displayPrice !== 'Not found' ? displayPrice : 'N/A'}
                                 </p>
                             </div>
                         </div>

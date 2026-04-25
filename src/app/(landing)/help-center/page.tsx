@@ -18,11 +18,6 @@ const BotIcon = () => (
   </svg>
 );
 
-const DatabaseIcon = () => (
-  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-  </svg>
-);
 
 const SendIcon = () => (
   <svg className="h-5 w-5 translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -89,15 +84,6 @@ export default function HelpCenterPage() {
     }
   };
 
-  const handleInit = async () => {
-    try {
-      await api.post('/chatbot/init');
-      alert('Knowledge base initialized successfully!');
-    } catch (error) {
-      console.error('Init error:', error);
-      alert('Failed to initialize knowledge base. Ensure Qdrant vector database is running/configured.');
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50/50 via-white to-purple-50 flex flex-col items-center pt-28 pb-12 mt-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden font-sans">
@@ -118,21 +104,10 @@ export default function HelpCenterPage() {
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="max-w-4xl w-full flex flex-col md:flex-row justify-between items-center gap-4 mb-8 z-10"
+        className="max-w-4xl w-full text-center mb-8 z-10"
       >
-        <div className="text-center md:text-left">
-          <h1 className="text-4xl sm:text-5xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-brand-600 via-indigo-600 to-purple-600 tracking-tight pb-1">AI Help Center</h1>
-          <p className="mt-2 text-gray-500 font-medium text-lg">Your intelligent RAG-powered assistant.</p>
-        </div>
-        <motion.button 
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={handleInit}
-          className="bg-white/80 backdrop-blur-sm text-indigo-700 border border-indigo-100 hover:border-indigo-200 px-5 py-2.5 rounded-full shadow-[0_2px_15px_-3px_rgba(0,0,0,0.05)] hover:shadow-[0_4px_20px_-3px_rgba(99,102,241,0.15)] transition-all text-sm font-semibold flex items-center gap-2"
-        >
-          <DatabaseIcon />
-          Initialize Vector DB
-        </motion.button>
+        <h1 className="text-4xl sm:text-5xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-brand-600 via-indigo-600 to-purple-600 tracking-tight pb-1">AI Help Center</h1>
+        <p className="mt-2 text-gray-500 font-medium text-lg">Your intelligent RAG-powered assistant.</p>
       </motion.div>
 
       <motion.div 

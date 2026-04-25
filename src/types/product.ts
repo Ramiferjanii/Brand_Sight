@@ -3,6 +3,7 @@ export interface Product {
     name: string;
     price: string;
     priceAmount: number;
+    oldPrice?: string;
     reference: string;
     overview: string;
     category: string;
