@@ -222,12 +222,14 @@ export default function HelpCenterPage() {
           marginBottom: 40,
         }}
       >
-        {[
-          { label: "Scraping Docs", icon: "🕷️", href: "/scraping" },
-          { label: "Market Reports", icon: "📊", href: "/market-reports" },
-          { label: "Scraping Health", icon: "🩺", href: "/scraping-health" },
-          { label: "AI Assistant", icon: "✨", href: "/help-center" },
-        ].map((item) => (
+        {(
+          [
+            { label: "Scraping Docs", icon: "🕷️", href: "/scraping" },
+            { label: "Market Reports", icon: "📊", href: "/market-reports" },
+            { label: "Scraping Health", icon: "🩺", href: "/scraping-health" },
+            { label: "AI Assistant", icon: "✨", href: "#", onClick: openChatbot },
+          ] as { label: string; icon: string; href: string; onClick?: () => void }[]
+        ).map((item) => (
           <a
             key={item.label}
             href={item.href}
