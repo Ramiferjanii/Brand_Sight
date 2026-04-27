@@ -106,6 +106,20 @@ export default function UserMetaCard() {
         });
         
         if (error) throw error;
+
+        // Sync with backend
+        try {
+            await api.post('/auth/sync-user', {
+                id: user?.id,
+                email: user?.email,
+                full_name: user?.user_metadata.full_name,
+                image: avatarUrl,
+                location
+            });
+        } catch (syncError) {
+            console.error("Failed to sync profile to backend:", syncError);
+        }
+
         await refreshUser();
         closeModal();
     } catch (error: any) {

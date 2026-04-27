@@ -5,6 +5,7 @@ import { Modal } from "../ui/modal";
 import Button from "../ui/button/Button";
 import Input from "../form/input/InputField";
 import Label from "../form/Label";
+import Alert from "../ui/alert/Alert";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabaseClient";
 
@@ -15,32 +16,82 @@ export default function UserInfoCard() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [oldPassword, setOldPassword] = useState("");
+  const [showOldPassword, setShowOldPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [notification, setNotification] = useState<{type: "success" | "error", message: string} | null>(null);
 
   useEffect(() => {
     if (user) {
       setName(user.user_metadata.full_name || "");
       setEmail(user.email || "");
+      setPassword("");
+      setOldPassword("");
+      setShowOldPassword(false);
+      setShowNewPassword(false);
+      setNotification(null);
     }
   }, [user, isOpen]);
+
+  const handleResetPassword = async () => {
+    setNotification(null);
+    if (!user?.email) return;
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(user.email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      if (error) throw error;
+      setNotification({ type: "success", message: "Un email de réinitialisation de mot de passe a été envoyé. Veuillez vérifier votre boîte de réception." });
+    } catch (error: any) {
+      setNotification({ type: "error", message: "Erreur lors de l'envoi de l'email : " + error.message });
+    }
+  };
+
+
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setNotification(null);
     try {
+        // Handle password update if a new password is provided
+        if (password && password.length >= 8) {
+            if (!oldPassword) {
+                setNotification({ type: "error", message: "Veuillez entrer votre mot de passe actuel pour en définir un nouveau." });
+                setLoading(false);
+                return;
+            }
+            
+            // Verify old password
+            const { error: signInError } = await supabase.auth.signInWithPassword({
+                email: user?.email || '',
+                password: oldPassword
+            });
+
+            if (signInError) {
+                setNotification({ type: "error", message: "Mot de passe actuel incorrect." });
+                setLoading(false);
+                return;
+            }
+
+            // Update to new password
+            const { error: updatePasswordError } = await supabase.auth.updateUser({ password: password });
+            if (updatePasswordError) throw updatePasswordError;
+        }
+
+        // Handle name update
         if (name !== user?.user_metadata.full_name) {
-            await supabase.auth.updateUser({
+            const { error: updateNameError } = await supabase.auth.updateUser({
               data: { full_name: name }
             });
-        }
-        if (password && password.length >= 8) {
-            await supabase.auth.updateUser({ password: password });
+            if (updateNameError) throw updateNameError;
         }
         
         await refreshUser();
         closeModal();
     } catch (error: any) {
-        alert("Failed to update profile: " + error.message);
+        setNotification({ type: "error", message: "Failed to update profile: " + error.message });
     } finally {
         setLoading(false);
     }
@@ -117,6 +168,15 @@ export default function UserInfoCard() {
           </div>
           <form className="flex flex-col" onSubmit={handleSave}>
             <div className="custom-scrollbar overflow-y-auto px-2 pb-3">
+              {notification && (
+                <div className="mb-5">
+                  <Alert 
+                    variant={notification.type} 
+                    title={notification.type === "success" ? "Succès" : "Erreur"} 
+                    message={notification.message} 
+                  />
+                </div>
+              )}
               <div className="grid grid-cols-1 gap-x-6 gap-y-5">
                 <div>
                   <Label>Full Name</Label>
@@ -129,14 +189,73 @@ export default function UserInfoCard() {
                 </div>
 
                 <div>
+                    <Label>Current Password</Label>
+                    <div className="relative">
+                        <Input 
+                            type={showOldPassword ? "text" : "password"} 
+                            placeholder="Required to set a new password" 
+                            value={oldPassword} 
+                            onChange={e => setOldPassword(e.target.value)} 
+                        />
+                        <button 
+                            type="button" 
+                            onClick={() => setShowOldPassword(!showOldPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 focus:outline-none"
+                            tabIndex={-1}
+                        >
+                            {showOldPassword ? (
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                                </svg>
+                            ) : (
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            )}
+                        </button>
+                    </div>
+                </div>
+
+                <div>
                     <Label>New Password (Optional)</Label>
-                    <Input 
-                        type="password" 
-                        placeholder="Leave empty to keep current" 
-                        value={password} 
-                        onChange={e => setPassword(e.target.value)} 
-                    />
-                    <p className="text-xs text-gray-500 mt-1">Min. 8 characters</p>
+                    <div className="relative">
+                        <Input 
+                            type={showNewPassword ? "text" : "password"} 
+                            placeholder="Leave empty to keep current" 
+                            value={password} 
+                            onChange={e => setPassword(e.target.value)} 
+                        />
+                        <button 
+                            type="button" 
+                            onClick={() => setShowNewPassword(!showNewPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 focus:outline-none"
+                            tabIndex={-1}
+                        >
+                            {showNewPassword ? (
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                                </svg>
+                            ) : (
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            )}
+                        </button>
+                    </div>
+                    <div className="flex justify-between items-center mt-2">
+                      <p className="text-xs text-gray-500">Min. 8 characters</p>
+                      <button 
+                        type="button" 
+                        onClick={handleResetPassword} 
+                        className="text-xs font-medium text-brand-500 hover:text-brand-600 dark:text-brand-400 dark:hover:text-brand-300 transition-colors"
+                      >
+                        Reset Password via Email
+                      </button>
+                    </div>
                 </div>
               </div>
             </div>
