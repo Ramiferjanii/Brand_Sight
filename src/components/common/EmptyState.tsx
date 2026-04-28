@@ -1,16 +1,32 @@
 'use client';
 
-import React from 'react';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 
 interface EmptyStateProps {
   title: string;
   description: string;
   onReset?: () => void;
+  actionLabel?: string;
+  href?: string;
   icon?: React.ReactNode;
 }
 
-const EmptyState: React.FC<EmptyStateProps> = ({ title, description, onReset, icon }) => {
+const EmptyState: React.FC<EmptyStateProps> = ({ title, description, onReset, actionLabel, href, icon }) => {
+  const buttonContent = (
+    <motion.button
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.5 }}
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      onClick={onReset}
+      className="mt-6 rounded-xl bg-brand-600 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-200 transition-all hover:bg-brand-700 hover:shadow-brand-300 dark:shadow-none"
+    >
+      {actionLabel || "Reset All Filters"}
+    </motion.button>
+  );
+
   return (
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
@@ -54,19 +70,13 @@ const EmptyState: React.FC<EmptyStateProps> = ({ title, description, onReset, ic
         {description}
       </motion.p>
 
-      {onReset && (
-        <motion.button
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={onReset}
-          className="mt-6 rounded-xl bg-brand-600 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-brand-200 transition-all hover:bg-brand-700 hover:shadow-brand-300 dark:shadow-none"
-        >
-          Reset All Filters
-        </motion.button>
-      )}
+      {href ? (
+        <Link href={href}>
+          {buttonContent}
+        </Link>
+      ) : onReset ? (
+        buttonContent
+      ) : null}
     </motion.div>
   );
 };

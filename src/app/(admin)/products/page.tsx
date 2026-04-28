@@ -172,16 +172,25 @@ export default function ProductsPage() {
                        </div>
                     ) : products.length === 0 ? (
                         <EmptyState 
-                            title="No products found"
-                            description="We couldn't find any products matching your current filters. Try adjusting your price range or search terms."
-                            onReset={() => {
+                            title={search || minPrice || maxPrice || category ? "No products found" : "Your catalog is empty"}
+                            description={search || minPrice || maxPrice || category 
+                                ? "We couldn't find any products matching your current filters. Try adjusting your price range or search terms." 
+                                : "You haven't scraped any products yet. Head over to the scraping section to start building your catalog."}
+                            actionLabel={search || minPrice || maxPrice || category ? "Reset All Filters" : "Go to Scraper"}
+                            href={search || minPrice || maxPrice || category ? undefined : "/scraper"}
+                            onReset={search || minPrice || maxPrice || category ? () => {
                                 setSearch('');
                                 setMinPrice('');
                                 setMaxPrice('');
                                 setCategory('');
                                 setPage(1);
                                 fetchProducts({ page: 1, search: '', minPrice: '', maxPrice: '', category: '' });
-                            }}
+                            } : undefined}
+                            icon={!(search || minPrice || maxPrice || category) ? (
+                                <svg className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            ) : undefined}
                         />
                     ) : (
                         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
