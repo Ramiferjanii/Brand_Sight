@@ -11,31 +11,7 @@ export default function TourButton() {
       data-tour="header-tour-btn"
       onClick={startTour}
       title="Start Platform Tour"
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "6px",
-        background: "linear-gradient(135deg, #7c3aed, #4f46e5)",
-        border: "none",
-        borderRadius: "8px",
-        boxShadow: "0 2px 8px rgba(124,58,237,0.35)",
-        color: "#fff",
-        cursor: "pointer",
-        fontSize: "12px",
-        fontWeight: "600",
-        padding: "6px 12px",
-        transition: "all 0.2s ease",
-        letterSpacing: "0.02em",
-        whiteSpace: "nowrap",
-      }}
-      onMouseEnter={(e) => {
-        (e.currentTarget).style.transform = "translateY(-1px)";
-        (e.currentTarget).style.boxShadow = "0 4px 15px rgba(124,58,237,0.5)";
-      }}
-      onMouseLeave={(e) => {
-        (e.currentTarget).style.transform = "translateY(0)";
-        (e.currentTarget).style.boxShadow = "0 2px 8px rgba(124,58,237,0.35)";
-      }}
+      className="flex items-center gap-1.5 bg-gradient-to-br from-purple-600 to-indigo-600 border-none rounded-lg shadow-[0_2px_8px_rgba(124,58,237,0.35)] text-white cursor-pointer text-xs font-semibold p-1.5 sm:px-3 sm:py-1.5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_4px_15px_rgba(124,58,237,0.5)] active:translate-y-0 whitespace-nowrap"
     >
       <svg
         width="14"
@@ -52,7 +28,7 @@ export default function TourButton() {
           strokeLinecap="round"
         />
       </svg>
-      Take a Tour
+      <span className="hidden sm:inline">Take a Tour</span>
     </button>
   );
 }

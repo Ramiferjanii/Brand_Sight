@@ -22,8 +22,8 @@ const LandingHero: React.FC = () => {
             New: Real-Time Sentiment Analysis
           </div>
           
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold text-gray-900 dark:text-white mb-6 tracking-tight">
-            BrandSight <br />
+          <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-extrabold text-gray-900 dark:text-white mb-6 tracking-tight">
+            BrandSight <br className="hidden md:block" />
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-brand-500 to-purple-600">
               Real-Time Brand Monitoring
             </span>
@@ -34,22 +34,22 @@ const LandingHero: React.FC = () => {
             Understand your public image without restricted APIs.
           </p>
           
-          <div className="flex flex-col sm:flex-row items-center gap-4">
+          <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto">
             {!isLoading && user ? (
-              <Link href="/dashboard">
-                <Button className="h-12 px-8 text-base shadow-lg shadow-brand-500/20" endIcon={<ArrowRightIcon />}>
-                  Go to Dashboard
+              <Link href="/dashboard" className="w-full sm:w-auto">
+                <Button className="w-full sm:w-auto h-12 px-8 text-base shadow-lg shadow-brand-500/20" endIcon={<ArrowRightIcon />}>
+                  Return to Dashboard
                 </Button>
               </Link>
             ) : !isLoading ? (
-              <Link href="/signup">
-                <Button className="h-12 px-8 text-base shadow-lg shadow-brand-500/20" endIcon={<ArrowRightIcon />}>
+              <Link href="/signup" className="w-full sm:w-auto">
+                <Button className="w-full sm:w-auto h-12 px-8 text-base shadow-lg shadow-brand-500/20" endIcon={<ArrowRightIcon />}>
                   Get Started
                 </Button>
               </Link>
             ) : null}
-            <Link href="#features">
-              <Button variant="outline" className="h-12 px-8 text-base border-gray-200 dark:border-gray-800">
+            <Link href="#features" className="w-full sm:w-auto">
+              <Button variant="outline" className="w-full sm:w-auto h-12 px-8 text-base border-gray-200 dark:border-gray-800">
                 View Features
               </Button>
             </Link>

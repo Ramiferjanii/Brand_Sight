@@ -39,7 +39,7 @@ const LandingNavbar: React.FC = () => {
             className="hidden dark:block"
             style={{ height: "40px", width: "auto" }}
           />
-          <span className="text-xl font-bold text-gray-800 dark:text-white">
+          <span className="hidden sm:block text-xl font-bold text-gray-800 dark:text-white">
             BRANDSIGHT
           </span>
         </Link>
@@ -60,13 +60,13 @@ const LandingNavbar: React.FC = () => {
           {!isLoading && user ? (
             <Link href="/dashboard">
               <Button size="sm">
-                Go to Dashboard
+                Return to Dashboard
               </Button>
             </Link>
           ) : !isLoading ? (
             <>
-              <Link href="/signin">
-                <Button variant="outline" size="sm" className="hidden sm:inline-flex">
+              <Link href="/signin" className="hidden sm:block">
+                <Button variant="outline" size="sm">
                   Sign In
                 </Button>
               </Link>

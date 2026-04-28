@@ -5,6 +5,7 @@ import LandingTestimonials from "@/components/landing/LandingTestimonials";
 import { Metadata } from "next";
 import Link from "next/link";
 import LandingCTAAuthButtons from "@/components/landing/LandingCTAAuthButtons";
+import DashboardPreview from "@/components/landing/DashboardPreview";
 
 export const metadata: Metadata = {
   title: "BrandSight | The Ultimate Web Scraping Platform",
@@ -22,7 +23,7 @@ export default function LandingPage() {
       <section className="py-24 overflow-hidden">
         <div className="container mx-auto px-4 md:px-6">
           <div className="flex flex-col lg:flex-row items-center gap-12">
-            <div className="flex-1">
+            <div className="flex-1 w-full">
               <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-6">
                 Brand Performance <br />
                 <span className="text-brand-500">at a Glance</span>
@@ -51,20 +52,8 @@ export default function LandingPage() {
               </ul>
             </div>
 
-            <div className="flex-1 relative">
-              <div className="absolute inset-0 bg-brand-500/20 blur-[100px] -z-10" />
-              <div className="rounded-3xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 md:p-10 shadow-xl">
-                <div className="space-y-6">
-                  <div className="h-4 w-1/3 bg-gray-100 dark:bg-gray-800 rounded-full" />
-                  <div className="h-4 w-full bg-gray-100 dark:bg-gray-800 rounded-full" />
-                  <div className="h-4 w-2/3 bg-gray-100 dark:bg-gray-800 rounded-full" />
-                  <div className="pt-4 grid grid-cols-2 gap-4">
-                    <div className="h-24 bg-brand-50 dark:bg-brand-500/10 rounded-2xl border border-brand-100 dark:border-brand-500/20" />
-                    <div className="h-24 bg-purple-50 dark:bg-purple-500/10 rounded-2xl border border-purple-100 dark:border-purple-500/20" />
-                  </div>
-                  <div className="h-4 w-full bg-gray-100 dark:bg-gray-800 rounded-full" />
-                </div>
-              </div>
+            <div className="flex-1 w-full relative">
+              <DashboardPreview />
             </div>
           </div>
         </div>

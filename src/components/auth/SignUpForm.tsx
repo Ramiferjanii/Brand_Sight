@@ -194,11 +194,11 @@ export default function SignUpForm() {
     <div className="w-full max-w-md mx-auto py-8">
       <div className="mb-8 text-center sm:text-left">
         <Link
-          href="/dashboard"
+          href="/"
           className="inline-flex items-center text-sm font-medium text-gray-400 transition-colors hover:text-brand-500 dark:text-gray-500 dark:hover:text-brand-400 mb-6 group"
         >
           <ChevronLeftIcon className="mr-2 group-hover:-translate-x-1 transition-transform" />
-          Back to Dashboard
+          Back to Home
         </Link>
         <h1 className="text-3xl font-bold text-gray-800 dark:text-white/90 mb-2">
           {needsVerification ? "Verify Email" : "Create Account"}
