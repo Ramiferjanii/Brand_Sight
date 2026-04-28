@@ -5,23 +5,25 @@ import ComponentCard from "@/components/common/ComponentCard";
 import Button from "@/components/ui/button/Button";
 import { DownloadIcon } from "@/icons";
 
+import { useAuth } from "@/context/AuthContext";
+
 const ScrapingResults: React.FC = () => {
+  const { user } = useAuth();
   const [results, setResults] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchResults = async () => {
+    if (!user) return;
     try {
         setError(null);
         const res = await api.get("/websites");
         const data = res.data;
         setResults(data.websites || []);
     } catch (err: any) {
-        console.error("Failed to fetch results", err);
-        if (err.response && err.response.status === 401) {
-            setError("Session expired. Please sign in again.");
-        } else {
+        if (err.response?.status !== 401) {
+            console.error("Failed to fetch results", err);
             setError("Failed to load scraping results.");
         }
     } finally {
@@ -30,10 +32,16 @@ const ScrapingResults: React.FC = () => {
   };
 
   React.useEffect(() => {
+    if (!user) {
+        setResults([]);
+        setLoading(false);
+        return;
+    }
+
     fetchResults();
-    const interval = setInterval(fetchResults, 5000); // 5s refresh
+    const interval = setInterval(fetchResults, 15000); // Increased to 15s
     return () => clearInterval(interval);
-  }, []);
+  }, [user]);
 
   const flattenedResults: any[] = [];
   results.forEach(site => {

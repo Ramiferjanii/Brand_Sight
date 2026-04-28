@@ -13,14 +13,26 @@ const api = axios.create({
 // Add a request interceptor to include the auth token in headers
 api.interceptors.request.use(
   async (config) => {
+    // List of public routes that don't need auth
+    const publicRoutes = ['/auth/signin', '/auth/signup', '/auth/reset-password'];
+    const isPublicRoute = publicRoutes.some(route => config.url?.includes(route));
+
     try {
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session?.access_token) {
             config.headers.Authorization = `Bearer ${session.access_token}`;
+        } else if (!isPublicRoute) {
+            // No session and not a public route - cancel the request
+            // This prevents the browser from sending the request and getting a 401
+            return Promise.reject({
+                message: "Unauthorized: No active session",
+                config,
+                response: { status: 401 }
+            });
         }
     } catch (error) {
-        // Fallback catch to ensure requests aren't blocked
+        // Fallback catch
     }
     return config;
   },
@@ -33,8 +45,15 @@ api.interceptors.request.use(
 api.interceptors.response.use(
     (response) => response,
     async (error) => {
+        // Handle manually rejected unauthorized requests silently
+        if (error.message === "Unauthorized: No active session") {
+            return new Promise(() => {}); // Return a pending promise to stop execution
+        }
+
         if (error.response?.status === 401) {
-            console.error("API Unauthorized (401):", error.config.url);
+            // Silently handle 401 - components will handle their own error states
+            // We can return a pending promise here too if we want to completely kill the chain
+            // but for now we'll just let it pass and be caught by component-level try/catch
         }
         return Promise.reject(error);
     }

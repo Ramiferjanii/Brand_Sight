@@ -8,6 +8,7 @@ import Input from '@/components/form/input/InputField';
 import Button from '@/components/ui/button/Button';
 import api from '@/lib/api';
 import PageTour, { TourStep } from '@/components/tour/PageTour';
+import { useAuth } from '@/context/AuthContext';
 
 const productsTourSteps: TourStep[] = [
   {
@@ -38,6 +39,7 @@ const productsTourSteps: TourStep[] = [
 
 
 export default function ProductsPage() {
+    const { user } = useAuth();
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
@@ -50,6 +52,7 @@ export default function ProductsPage() {
     const [category, setCategory] = useState('');
 
     const fetchProducts = async (overrides?: { page?: number; search?: string; minPrice?: string; maxPrice?: string; category?: string }) => {
+        if (!user) return;
         setLoading(true);
         try {
             const p = overrides?.page ?? page;
@@ -73,17 +76,21 @@ export default function ProductsPage() {
                 setProducts(data.products);
                 setTotalPages(data.pagination?.totalPages || 1);
             }
-        } catch (error) {
-            console.error('Failed to fetch products:', error);
+        } catch (error: any) {
+            if (error.response?.status !== 401) {
+                console.error('Failed to fetch products:', error);
+            }
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchProducts({ page });
+        if (user) {
+            fetchProducts({ page });
+        }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [page]); // Trigger on page change
+    }, [page, user]); // Trigger on page change or user login
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
@@ -177,7 +184,7 @@ export default function ProductsPage() {
                                 ? "We couldn't find any products matching your current filters. Try adjusting your price range or search terms." 
                                 : "You haven't scraped any products yet. Head over to the scraping section to start building your catalog."}
                             actionLabel={search || minPrice || maxPrice || category ? "Reset All Filters" : "Go to Scraper"}
-                            href={search || minPrice || maxPrice || category ? undefined : "/scraper"}
+                            href={search || minPrice || maxPrice || category ? undefined : "/scraping"}
                             onReset={search || minPrice || maxPrice || category ? () => {
                                 setSearch('');
                                 setMinPrice('');

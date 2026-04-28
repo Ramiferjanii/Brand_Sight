@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import api from '@/lib/api';
+import { useAuth } from '@/context/AuthContext';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -43,6 +44,7 @@ export interface Pagination {
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
 export function useReviews(productId: string) {
+    const { user } = useAuth();
     const [reviews, setReviews] = useState<Review[]>([]);
     const [summary, setSummary] = useState<ReviewSummary | null>(null);
     const [aiVerdict, setAiVerdict] = useState<AiVerdict | null>(null);
@@ -54,31 +56,38 @@ export function useReviews(productId: string) {
     const [error, setError] = useState<string | null>(null);
 
     const fetchSummary = useCallback(async () => {
+        if (!user || !productId) return;
         setIsLoadingSummary(true);
         setError(null);
         try {
             const res = await api.get(`/reviews/${productId}/summary`);
             setSummary(res.data.summary);
         } catch (err: any) {
-            setError(err.response?.data?.error || 'Failed to load summary.');
+            if (err.response?.status !== 401) {
+                setError(err.response?.data?.error || 'Failed to load summary.');
+            }
         } finally {
             setIsLoadingSummary(false);
         }
-    }, [productId]);
+    }, [productId, user]);
 
     const fetchAiVerdict = useCallback(async () => {
+        if (!user || !productId) return;
         setIsLoadingAi(true);
         try {
             const res = await api.get(`/reviews/${productId}/ai-summary`);
             setAiVerdict(res.data.aiVerdict);
         } catch (err: any) {
-            console.error('Failed to load AI verdict:', err);
+            if (err.response?.status !== 401) {
+                console.error('Failed to load AI verdict:', err);
+            }
         } finally {
             setIsLoadingAi(false);
         }
-    }, [productId]);
+    }, [productId, user]);
 
     const fetchReviews = useCallback(async (page = 1, sentiment?: string) => {
+        if (!user || !productId) return;
         setIsLoadingReviews(true);
         setError(null);
         try {
@@ -88,28 +97,34 @@ export function useReviews(productId: string) {
             setReviews(res.data.reviews);
             setPagination(res.data.pagination);
         } catch (err: any) {
-            setError(err.response?.data?.error || 'Failed to load reviews.');
+            if (err.response?.status !== 401) {
+                setError(err.response?.data?.error || 'Failed to load reviews.');
+            }
         } finally {
             setIsLoadingReviews(false);
         }
-    }, [productId]);
+    }, [productId, user]);
 
     const [trends, setTrends] = useState<{ year: string; count: number }[]>([]);
     const [isLoadingTrends, setIsLoadingTrends] = useState(false);
 
     const fetchTrends = useCallback(async () => {
+        if (!user || !productId) return;
         setIsLoadingTrends(true);
         try {
             const res = await api.get(`/reviews/${productId}/trends`);
             setTrends(res.data.trends);
-        } catch (err) {
-            console.error('Failed to load trends:', err);
+        } catch (err: any) {
+            if (err.response?.status !== 401) {
+                console.error('Failed to load trends:', err);
+            }
         } finally {
             setIsLoadingTrends(false);
         }
-    }, [productId]);
+    }, [productId, user]);
 
     const triggerFetch = useCallback(async (maxReviews = 20) => {
+        if (!user || !productId) return;
         setIsFetching(true);
         setError(null);
         try {
@@ -117,11 +132,13 @@ export function useReviews(productId: string) {
             // Reload data after successful fetch
             await Promise.all([fetchSummary(), fetchReviews(1), fetchAiVerdict(), fetchTrends()]);
         } catch (err: any) {
-            setError(err.response?.data?.error || 'Failed to fetch reviews from Amazon.');
+            if (err.response?.status !== 401) {
+                setError(err.response?.data?.error || 'Failed to fetch reviews from Amazon.');
+            }
         } finally {
             setIsFetching(false);
         }
-    }, [productId, fetchSummary, fetchReviews, fetchAiVerdict, fetchTrends]);
+    }, [productId, fetchSummary, fetchReviews, fetchAiVerdict, fetchTrends, user]);
 
     return {
         reviews,

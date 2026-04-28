@@ -5,7 +5,10 @@ import ComponentCard from "@/components/common/ComponentCard";
 import Button from "@/components/ui/button/Button";
 import { DownloadIcon } from "@/icons"; // Use standard or custom icons
 
+import { useAuth } from "@/context/AuthContext";
+
 const ScrapingHistory: React.FC = () => {
+  const { user } = useAuth();
   const [results, setResults] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
@@ -13,24 +16,33 @@ const ScrapingHistory: React.FC = () => {
   const [exportingId, setExportingId] = useState<string | null>(null);
 
   const fetchResults = async () => {
+    if (!user) return;
     try {
         setError(null);
         const res = await api.get("/websites");
         const data = res.data;
         setResults(data.websites || []);
     } catch (err: any) {
-        console.error("Failed to fetch results", err);
-        setError("Failed to load scraping history.");
+        if (err.response?.status !== 401) {
+            console.error("Failed to fetch results", err);
+            setError("Failed to load scraping history.");
+        }
     } finally {
         setLoading(false);
     }
   };
 
   React.useEffect(() => {
+    if (!user) {
+        setResults([]);
+        setLoading(false);
+        return;
+    }
+
     fetchResults();
-    const interval = setInterval(fetchResults, 10000); // 10s refresh on this page
+    const interval = setInterval(fetchResults, 30000); // 30s refresh
     return () => clearInterval(interval);
-  }, []);
+  }, [user]);
 
   const handleDownloadCsv = async (websiteId: string, websiteName: string) => {
     try {

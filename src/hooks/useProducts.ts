@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import api from '@/lib/api';
 import { Product } from '@/types/product';
+import { useAuth } from '@/context/AuthContext';
 
 export interface UseProductsOptions {
     page?: number;
@@ -13,6 +14,7 @@ export interface UseProductsOptions {
 }
 
 export function useProducts(initialOptions: UseProductsOptions = {}) {
+    const { user } = useAuth();
     // Destructure to have stable dependencies
     const { 
         limit: initialLimit = 12, 
@@ -32,6 +34,7 @@ export function useProducts(initialOptions: UseProductsOptions = {}) {
     const [error, setError] = useState<string | null>(null);
 
     const fetchProducts = useCallback(async (options: UseProductsOptions = {}) => {
+        if (!user) return;
         setLoading(true);
         setError(null);
         try {
@@ -63,12 +66,15 @@ export function useProducts(initialOptions: UseProductsOptions = {}) {
                 setTotal(data.pagination?.total || 0);
             }
         } catch (err: any) {
-            console.error('Failed to fetch products:', err);
-            setError(err.response?.data?.error || 'Failed to fetch products');
+            if (err.response?.status !== 401) {
+                console.error('Failed to fetch products:', err);
+                setError(err.response?.data?.error || 'Failed to fetch products');
+            }
         } finally {
             setLoading(false);
         }
     }, [
+        user,
         page, 
         initialLimit, 
         initialName, 
@@ -79,8 +85,10 @@ export function useProducts(initialOptions: UseProductsOptions = {}) {
     ]);
 
     useEffect(() => {
-        fetchProducts();
-    }, [fetchProducts]);
+        if (user) {
+            fetchProducts();
+        }
+    }, [user, fetchProducts]);
 
     return {
         products,

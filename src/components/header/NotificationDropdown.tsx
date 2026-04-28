@@ -4,6 +4,8 @@ import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import api from "../../lib/api"; // Added the proper relative path because "@/lib/api" is not guaranteed
 
+import { useAuth } from "@/context/AuthContext";
+
 type Notification = {
   id: string;
   title: string;
@@ -14,23 +16,33 @@ type Notification = {
 };
 
 export default function NotificationDropdown() {
+  const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
+    if (!user) {
+      setNotifications([]);
+      setUnreadCount(0);
+      return;
+    }
+
     fetchNotifications();
-    const interval = setInterval(fetchNotifications, 15000);
+    const interval = setInterval(fetchNotifications, 30000); // Increased interval to 30s to reduce load
     return () => clearInterval(interval);
-  }, []);
+  }, [user]);
 
   const fetchNotifications = async () => {
+    if (!user) return;
     try {
         const response = await api.get('/notifications');
         setNotifications(response.data.notifications || []);
         setUnreadCount(response.data.unreadCount || 0);
-    } catch (error) {
-        console.error('Failed to fetch notifications:', error);
+    } catch (error: any) {
+        if (error.response?.status !== 401) {
+            console.error('Failed to fetch notifications:', error);
+        }
     }
   };
 

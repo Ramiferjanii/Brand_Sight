@@ -4,8 +4,10 @@ import api from "@/lib/api";
 import Badge from "@/components/ui/badge/Badge";
 import { ArrowUpIcon, BoxIconLine, CheckCircleIcon, ErrorIcon } from "@/icons";
 
-const ScrapingMetrics: React.FC = () => {
+import { useAuth } from "@/context/AuthContext";
 
+const ScrapingMetrics: React.FC = () => {
+  const { user } = useAuth();
   const [metrics, setMetrics] = React.useState({
     totalWebsites: 0,
     totalProducts: 0,
@@ -13,6 +15,8 @@ const ScrapingMetrics: React.FC = () => {
   });
 
   React.useEffect(() => {
+    if (!user) return;
+
     const fetchMetrics = async () => {
       try {
         const [websitesResult, productsResult] = await Promise.allSettled([
@@ -26,14 +30,18 @@ const ScrapingMetrics: React.FC = () => {
         if (websitesResult.status === 'fulfilled') {
             websites = websitesResult.value.data.websites || [];
         } else {
-            console.error("Failed to fetch websites metrics", websitesResult.reason);
+            if (websitesResult.reason?.response?.status !== 401) {
+                console.error("Failed to fetch websites metrics", websitesResult.reason);
+            }
         }
 
         if (productsResult.status === 'fulfilled') {
             totalProductsCount = productsResult.value.data.pagination?.total || 0;
         } else {
-             // Non-critical, just log
-             console.log("Failed to fetch products count", productsResult.reason);
+             // Non-critical, just log if not 401
+             if (productsResult.reason?.response?.status !== 401) {
+                console.log("Failed to fetch products count", productsResult.reason);
+             }
         }
         
         let recent = 0;
@@ -51,15 +59,17 @@ const ScrapingMetrics: React.FC = () => {
             recentScrapes: recent
         });
 
-      } catch (error) {
-        console.error("Unexpected error in metrics fetch", error);
+      } catch (error: any) {
+        if (error.response?.status !== 401) {
+            console.error("Unexpected error in metrics fetch", error);
+        }
       }
     };
     
     fetchMetrics();
-    const interval = setInterval(fetchMetrics, 10000);
+    const interval = setInterval(fetchMetrics, 30000); // 30s
     return () => clearInterval(interval);
-  }, []);
+  }, [user]);
 
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 md:gap-6">

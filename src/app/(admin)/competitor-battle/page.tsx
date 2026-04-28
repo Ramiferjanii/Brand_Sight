@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import ComponentCard from "@/components/common/ComponentCard";
 import api from "@/lib/api";
 import { useProducts } from "@/hooks/useProducts";
+import { useAuth } from "@/context/AuthContext";
 import { BoxCubeIcon, PieChartIcon } from "@/icons";
 import PremiumAlert from "@/components/ui/PremiumAlert";
 import { Swiper, SwiperSlide } from "swiper/react";
@@ -64,6 +65,7 @@ interface ProductComparison {
 }
 
 export default function CompetitorBattle() {
+  const { user } = useAuth();
   const { products, loading: loadingProducts } = useProducts({ limit: 20 });
   const [searchA, setSearchA] = useState("");
   const [searchB, setSearchB] = useState("");
@@ -162,7 +164,7 @@ export default function CompetitorBattle() {
   };
 
   const searchProduct = async (query: string, side: 'A' | 'B') => {
-    if (query.length < 2) return;
+    if (!user || query.length < 2) return;
     try {
       const res = await api.get(`/products?name=${query}&limit=5`);
       const formatted = res.data.products.map((p: any) => ({
@@ -175,8 +177,10 @@ export default function CompetitorBattle() {
       } else {
           setResultsA(formatted);
       }
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+        if (err.response?.status !== 401) {
+            console.error(err);
+        }
     }
   };
 

@@ -7,7 +7,10 @@ import Label from "@/components/form/Label";
 import Button from "@/components/ui/button/Button";
 import ComponentCard from "@/components/common/ComponentCard";
 
+import { useAuth } from "@/context/AuthContext";
+
 const ScrapingForm: React.FC = () => {
+  const { user } = useAuth();
   const [websites, setWebsites] = React.useState<{ value: string; label: string }[]>([]);
   const [selectedWebsite, setSelectedWebsite] = React.useState("");
   const [customUrl, setCustomUrl] = React.useState("");
@@ -27,20 +30,31 @@ const ScrapingForm: React.FC = () => {
   });
 
   React.useEffect(() => {
+    if (!user) {
+        setWebsites([]);
+        return;
+    }
+    
     api.get("/websites")
       .then((res) => {
         const data = res.data;
-        const options = data.websites.map((w: any) => ({
+        const options = (data.websites || []).map((w: any) => ({
           value: w.id, 
           label: w.name,
         }));
         setWebsites(options);
       })
-      .catch((err) => console.error("Failed to load websites", err));
-  }, []);
+      .catch((err) => {
+          if (err.response?.status !== 401) {
+              console.error("Failed to load websites", err);
+          }
+      });
+  }, [user]);
 
   // Poll for scrape completion
   const pollForCompletion = (websiteId: string, initialLastScraped: string | null) => {
+    if (!user) return;
+
     const maxAttempts = 60; // 5 minutes max
     let attempts = 0;
 
