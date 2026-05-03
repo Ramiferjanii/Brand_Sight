@@ -2,7 +2,8 @@
 import { EcommerceMetrics } from "@/components/ecommerce/EcommerceMetrics";
 import { ProductAnalysisCarousel } from "@/components/ecommerce/ProductAnalysisCarousel";
 import React from "react";
-import MonthlySalesChart from "@/components/ecommerce/MonthlySalesChart";
+import MonthlyReviewChart from "@/components/ecommerce/MonthlyReviewChart";
+import RatingVsPriceChart from "@/components/ecommerce/RatingVsPriceChart";
 import AiDashboardInsights from "@/components/ecommerce/AiDashboardInsights";
 import { useDashboard } from "@/hooks/useDashboard";
 import PageTour, { TourStep } from "@/components/tour/PageTour";
@@ -43,7 +44,7 @@ const dashboardTourSteps: TourStep[] = [
 ];
 
 export default function Ecommerce() {
-  const { stats, insights, salesVolume, isLoadingSalesVolume, fetchSalesVolume, isLoadingStats, isLoadingInsights, refresh } = useDashboard();
+  const { stats, insights, reviewActivity, scatterData, isLoadingReviewActivity, isLoadingStats, isLoadingInsights, isLoadingScatter, fetchReviewActivity, refresh } = useDashboard();
 
   return (
     <div className="space-y-6">
@@ -54,25 +55,31 @@ export default function Ecommerce() {
       </div>
 
       {/* AI Insights Section */}
-      <div data-tour="ai-insights">
+      <div data-tour="ai-insights" className="scroll-mt-28">
         <AiDashboardInsights insights={insights} isLoading={isLoadingInsights} />
       </div>
 
       <div className="grid grid-cols-12 gap-4 md:gap-6">
-        <div className="col-span-12" data-tour="dashboard-metrics">
+        <div className="col-span-12 scroll-mt-28" data-tour="dashboard-metrics">
           <EcommerceMetrics stats={stats} isLoading={isLoadingStats} />
         </div>
 
-        <div className="col-span-12" data-tour="dashboard-carousel">
+        <div className="col-span-12 scroll-mt-28" data-tour="dashboard-carousel">
           <ProductAnalysisCarousel />
         </div>
 
-        <div className="col-span-12" data-tour="dashboard-sales">
-          <MonthlySalesChart 
-            salesVolume={salesVolume}
-            isLoading={isLoadingSalesVolume}
-            fetchSalesVolume={fetchSalesVolume}
-            fallbackData={stats?.monthlySales || []} 
+        <div className="col-span-12 xl:col-span-6" data-tour="dashboard-sales">
+          <MonthlyReviewChart
+            reviewActivity={reviewActivity}
+            isLoading={isLoadingReviewActivity}
+            fetchReviewActivity={fetchReviewActivity}
+          />
+        </div>
+
+        <div className="col-span-12 xl:col-span-6" data-tour="dashboard-scatter">
+          <RatingVsPriceChart 
+            data={scatterData} 
+            isLoading={isLoadingScatter} 
           />
         </div>
       </div>

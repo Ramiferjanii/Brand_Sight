@@ -49,9 +49,11 @@ export function useReviews(productId: string) {
     const [summary, setSummary] = useState<ReviewSummary | null>(null);
     const [aiVerdict, setAiVerdict] = useState<AiVerdict | null>(null);
     const [pagination, setPagination] = useState<Pagination | null>(null);
+    const [ratingDistribution, setRatingDistribution] = useState<{ rating: number; count: number }[]>([]);
     const [isLoadingReviews, setIsLoadingReviews] = useState(false);
     const [isLoadingSummary, setIsLoadingSummary] = useState(false);
     const [isLoadingAi, setIsLoadingAi] = useState(false);
+    const [isLoadingRatingDist, setIsLoadingRatingDist] = useState(false);
     const [isFetching, setIsFetching] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -105,21 +107,18 @@ export function useReviews(productId: string) {
         }
     }, [productId, user]);
 
-    const [trends, setTrends] = useState<{ year: string; count: number }[]>([]);
-    const [isLoadingTrends, setIsLoadingTrends] = useState(false);
-
-    const fetchTrends = useCallback(async () => {
+    const fetchRatingDistribution = useCallback(async () => {
         if (!user || !productId) return;
-        setIsLoadingTrends(true);
+        setIsLoadingRatingDist(true);
         try {
-            const res = await api.get(`/reviews/${productId}/trends`);
-            setTrends(res.data.trends);
+            const res = await api.get(`/reviews/${productId}/rating-distribution`);
+            setRatingDistribution(res.data.distribution || []);
         } catch (err: any) {
             if (err.response?.status !== 401) {
-                console.error('Failed to load trends:', err);
+                console.error('Failed to load rating distribution:', err);
             }
         } finally {
-            setIsLoadingTrends(false);
+            setIsLoadingRatingDist(false);
         }
     }, [productId, user]);
 
@@ -130,7 +129,7 @@ export function useReviews(productId: string) {
         try {
             await api.post(`/reviews/fetch/${productId}`, { maxReviews });
             // Reload data after successful fetch
-            await Promise.all([fetchSummary(), fetchReviews(1), fetchAiVerdict(), fetchTrends()]);
+            await Promise.all([fetchSummary(), fetchReviews(1), fetchAiVerdict(), fetchRatingDistribution()]);
         } catch (err: any) {
             if (err.response?.status !== 401) {
                 setError(err.response?.data?.error || 'Failed to fetch reviews from Amazon.');
@@ -138,24 +137,24 @@ export function useReviews(productId: string) {
         } finally {
             setIsFetching(false);
         }
-    }, [productId, fetchSummary, fetchReviews, fetchAiVerdict, fetchTrends, user]);
+    }, [productId, fetchSummary, fetchReviews, fetchAiVerdict, fetchRatingDistribution, user]);
 
     return {
         reviews,
         summary,
         aiVerdict,
-        trends,
+        ratingDistribution,
         pagination,
         isLoadingReviews,
         isLoadingSummary,
         isLoadingAi,
-        isLoadingTrends,
+        isLoadingRatingDist,
         isFetching,
         error,
         fetchSummary,
         fetchReviews,
         fetchAiVerdict,
-        fetchTrends,
+        fetchRatingDistribution,
         triggerFetch,
     };
 }

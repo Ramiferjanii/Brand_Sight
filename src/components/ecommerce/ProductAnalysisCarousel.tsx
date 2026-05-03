@@ -45,16 +45,16 @@ export const ProductAnalysisCarousel = () => {
     reviews,
     summary,
     aiVerdict,
-    trends,
+    ratingDistribution,
     isLoadingReviews,
     isLoadingSummary,
     isLoadingAi,
-    isLoadingTrends,
+    isLoadingRatingDist,
     isFetching,
     fetchReviews,
     fetchSummary,
     fetchAiVerdict,
-    fetchTrends,
+    fetchRatingDistribution,
     triggerFetch
   } = useReviews(selectedProduct?.id || "");
 
@@ -63,9 +63,9 @@ export const ProductAnalysisCarousel = () => {
       fetchSummary();
       fetchReviews(1);
       fetchAiVerdict();
-      fetchTrends();
+      fetchRatingDistribution();
     }
-  }, [selectedProduct, fetchSummary, fetchReviews, fetchAiVerdict, fetchTrends]);
+  }, [selectedProduct, fetchSummary, fetchReviews, fetchAiVerdict, fetchRatingDistribution]);
 
   const sentimentChartOptions: ApexOptions = {
     chart: {
@@ -95,57 +95,54 @@ export const ProductAnalysisCarousel = () => {
     summary?.negative || 0,
   ];
 
-  const salesActivityChartOptions: ApexOptions = {
+  const ratingChartOptions: ApexOptions = {
     chart: {
-      type: "area",
+      type: "bar",
       fontFamily: "Outfit, sans-serif",
-      toolbar: {
-        show: false,
+      toolbar: { show: false },
+      animations: { enabled: true, easing: "easeinout", speed: 500 },
+    },
+    colors: ["#fbbf24"],
+    plotOptions: {
+      bar: {
+        borderRadius: 5,
+        columnWidth: "55%",
+        distributed: true,
       },
     },
-    stroke: {
-      curve: "smooth",
-      width: 2,
-    },
-    colors: ["#465FFF"],
-    fill: {
-      type: "gradient",
-      gradient: {
-        shadeIntensity: 1,
-        opacityFrom: 0.45,
-        opacityTo: 0.05,
-        stops: [20, 100, 100],
-      },
-    },
+    dataLabels: { enabled: false },
     xaxis: {
-      categories: trends.map(t => t.year),
-      axisBorder: {
-        show: false,
+      categories: ["1 ★", "2 ★", "3 ★", "4 ★", "5 ★"],
+      axisBorder: { show: false },
+      axisTicks: { show: false },
+    },
+    yaxis: { 
+      labels: { 
+        show: true,
+        formatter: (val) => Math.round(val).toString()
       },
-      axisTicks: {
-        show: false,
-      },
+      min: 0,
+      tickAmount: 4
     },
-    yaxis: {
-      labels: {
-        show: false,
-      },
+    grid: { 
+      show: true,
+      borderColor: "#f1f5f9",
+      strokeDashArray: 4,
+      yaxis: { lines: { show: true } }
     },
-    grid: {
-      show: false,
-    },
-    dataLabels: {
-      enabled: false,
-    },
+    legend: { show: false },
     tooltip: {
-      enabled: true,
+      y: { formatter: (val: number) => `${val} review${val !== 1 ? "s" : ""}` },
     },
   };
 
-  const salesActivitySeries = [
+  const ratingChartSeries = [
     {
-      name: "Estimated Sales",
-      data: trends.map(t => t.count * 85), // Estimated 85 sales per review
+      name: "Reviews",
+      data:
+        ratingDistribution.length > 0
+          ? ratingDistribution.map((d) => d.count)
+          : [0, 0, 0, 0, 0],
     },
   ];
 
@@ -265,14 +262,14 @@ export const ProductAnalysisCarousel = () => {
                 )}
               </div>
               <div className="flex flex-col items-center">
-                <span className="mb-4 text-sm font-medium text-gray-500">Estimated Sales (Volume)</span>
-                {isLoadingTrends ? (
+                <span className="mb-4 text-sm font-medium text-gray-500">Rating Distribution (1–5 ★)</span>
+                {isLoadingRatingDist ? (
                   <div className="h-[200px] w-full animate-pulse bg-gray-100 rounded-lg"></div>
                 ) : (
                   <Chart
-                    options={salesActivityChartOptions}
-                    series={salesActivitySeries}
-                    type="area"
+                    options={ratingChartOptions}
+                    series={ratingChartSeries}
+                    type="bar"
                     width={280}
                     height={200}
                   />
@@ -329,7 +326,7 @@ export const ProductAnalysisCarousel = () => {
                   onClick={() => triggerFetch(20)}
                   className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 transition-colors"
                 >
-                  Fetch Reviews from Amazon
+                  Get Reviews from Amazon
                 </button>
               </div>
             )}

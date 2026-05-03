@@ -1,5 +1,4 @@
 "use client";
-import Checkbox from "@/components/form/input/Checkbox";
 import Input from "@/components/form/input/InputField";
 import Label from "@/components/form/Label";
 import Button from "@/components/ui/button/Button";
@@ -13,7 +12,6 @@ import api from "@/lib/api";
 
 export default function SignUpForm() {
   const [showPassword, setShowPassword] = useState(false);
-  const [isChecked, setIsChecked] = useState(false);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -29,10 +27,6 @@ export default function SignUpForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isChecked) {
-      setError("Please agree to the Terms of Service.");
-      return;
-    }
     
     if (password.length < 8) {
         setError("Password must be at least 8 characters long.");
@@ -311,14 +305,7 @@ export default function SignUpForm() {
             <p className="mt-1.5 text-xs text-gray-500">Must be at least 8 characters.</p>
           </div>
   
-          <div className="flex items-start gap-3 py-2">
-            <Checkbox checked={isChecked} onChange={setIsChecked} className="mt-0.5" />
-            <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed font-medium">
-              By signing up, you agree to our{" "}
-              <Link href="/terms" className="text-brand-500 hover:underline">Terms of Service</Link> and{" "}
-              <Link href="/privacy" className="text-brand-500 hover:underline">Privacy Policy</Link>.
-            </p>
-          </div>
+
   
           <Button
             type="submit"

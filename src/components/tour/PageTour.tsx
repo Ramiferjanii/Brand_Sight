@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 import { Joyride as JoyrideBase, STATUS, TooltipRenderProps } from "react-joyride";
 
@@ -188,7 +189,6 @@ function CustomTooltip({
     </div>
   );
 }
-
 // ----- Page Tour Button -----
 interface PageTourProps {
   steps: TourStep[];
@@ -197,21 +197,51 @@ interface PageTourProps {
 
 export default function PageTour({ steps, label = "Take a Tour" }: PageTourProps) {
   const [run, setRun] = useState(false);
+  const [tourKeyId, setTourKeyId] = useState(0);
+  const pathname = usePathname();
+
+  useEffect(() => {
+    // Check if the user has seen the tour on this specific page
+    const storageKey = `page_tour_seen_${pathname}`;
+    const hasSeen = localStorage.getItem(storageKey);
+    
+    if (!hasSeen) {
+      // Set it IMMEDIATELY so if they refresh mid-tour, it won't pop up again
+      localStorage.setItem(storageKey, "true");
+      
+      // Auto-start the tour with a slight delay so page has time to render
+      const timer = setTimeout(() => {
+        setRun(true);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [pathname]);
 
   const handleCallback = useCallback((data: { status: string }) => {
     if (data.status === STATUS.FINISHED || data.status === STATUS.SKIPPED) {
       setRun(false);
+      // Mark this specific page's tour as completed
+      const storageKey = `page_tour_seen_${pathname}`;
+      localStorage.setItem(storageKey, "true");
     }
-  }, []);
+  }, [pathname]);
+
+  const handleStartTour = () => {
+    // Changing the key forces Joyride to unmount/remount, resetting its internal step index to 0
+    setTourKeyId(prev => prev + 1);
+    setRun(true);
+  };
 
   return (
     <>
       <Joyride
+        key={tourKeyId}
         steps={steps}
         run={run}
         continuous
         showSkipButton
         scrollToFirstStep
+        scrollOffset={250}
         callback={handleCallback}
         tooltipComponent={CustomTooltip}
         spotlightRadius={12}
@@ -224,7 +254,7 @@ export default function PageTour({ steps, label = "Take a Tour" }: PageTourProps
         }}
       />
       <button
-        onClick={() => setRun(true)}
+        onClick={handleStartTour}
         title={label}
         style={{
           display: "inline-flex",

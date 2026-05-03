@@ -42,27 +42,29 @@ export interface DashboardInsights {
     tips: string[];
 }
 
-export interface SalesVolumeResponse {
+export interface ReviewActivityResponse {
     success: boolean;
     groupBy: string | null;
     months: number;
-    data?: Array<{ month: string; estimatedSales: number; reviewCount: number }>;
+    data?: Array<{ month: string; reviewCount: number }>;
     series?: Array<{
         groupValue: string;
-        data: Array<{ month: string; estimatedSales: number; reviewCount: number }>;
+        data: Array<{ month: string; reviewCount: number }>;
     }>;
-    totals?: Array<{ month: string; estimatedSales: number; reviewCount: number }>;
+    totals?: Array<{ month: string; reviewCount: number }>;
 }
 
 export function useDashboard() {
     const { user } = useAuth();
     const [stats, setStats] = useState<DashboardStats | null>(null);
     const [insights, setInsights] = useState<DashboardInsights | null>(null);
-    const [salesVolume, setSalesVolume] = useState<SalesVolumeResponse | null>(null);
+    const [reviewActivity, setReviewActivity] = useState<ReviewActivityResponse | null>(null);
+    const [scatterData, setScatterData] = useState<any[] | null>(null);
     
     const [isLoadingStats, setIsLoadingStats] = useState(false);
     const [isLoadingInsights, setIsLoadingInsights] = useState(false);
-    const [isLoadingSalesVolume, setIsLoadingSalesVolume] = useState(false);
+    const [isLoadingReviewActivity, setIsLoadingReviewActivity] = useState(false);
+    const [isLoadingScatter, setIsLoadingScatter] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const fetchStats = useCallback(async () => {
@@ -97,23 +99,40 @@ export function useDashboard() {
         }
     }, [user]);
 
-    const fetchSalesVolume = useCallback(async (months = 6, groupBy?: 'category' | 'domain') => {
+    const fetchReviewActivity = useCallback(async (months = 6, groupBy?: 'category' | 'domain') => {
         if (!user) return null;
-        setIsLoadingSalesVolume(true);
+        setIsLoadingReviewActivity(true);
         try {
             const params = new URLSearchParams({ months: months.toString() });
             if (groupBy) params.append('groupBy', groupBy);
             
-            const res = await api.get(`/dashboard/sales-volume?${params.toString()}`);
-            setSalesVolume(res.data);
+            const res = await api.get(`/dashboard/review-activity?${params.toString()}`);
+            setReviewActivity(res.data);
             return res.data;
         } catch (err: any) {
             if (err.response?.status !== 401) {
-                console.error('Failed to load sales volume:', err);
+                console.error('Failed to load review activity:', err);
             }
             return null;
         } finally {
-            setIsLoadingSalesVolume(false);
+            setIsLoadingReviewActivity(false);
+        }
+    }, [user]);
+
+    const fetchScatterData = useCallback(async () => {
+        if (!user) return null;
+        setIsLoadingScatter(true);
+        try {
+            const res = await api.get('/dashboard/price-rating-scatter');
+            setScatterData(res.data.data);
+            return res.data.data;
+        } catch (err: any) {
+            if (err.response?.status !== 401) {
+                console.error('Failed to load scatter data:', err);
+            }
+            return null;
+        } finally {
+            setIsLoadingScatter(false);
         }
     }, [user]);
 
@@ -121,21 +140,26 @@ export function useDashboard() {
         if (user) {
             fetchStats();
             fetchInsights();
+            fetchScatterData();
         }
-    }, [user, fetchStats, fetchInsights]);
+    }, [user, fetchStats, fetchInsights, fetchScatterData]);
 
     return {
         stats,
         insights,
-        salesVolume,
+        reviewActivity,
+        scatterData,
         isLoadingStats,
         isLoadingInsights,
-        isLoadingSalesVolume,
+        isLoadingReviewActivity,
+        isLoadingScatter,
         error,
-        fetchSalesVolume,
+        fetchReviewActivity,
+        fetchScatterData,
         refresh: () => {
             fetchStats();
             fetchInsights();
+            fetchScatterData();
         }
     };
 }
