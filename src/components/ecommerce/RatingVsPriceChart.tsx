@@ -43,7 +43,7 @@ export default function RatingVsPriceChart({ data, isLoading }: RatingVsPriceCha
     xaxis: {
       type: "numeric",
       title: { text: "Price ($)", style: { fontWeight: 500, color: "#64748B" } },
-      labels: { formatter: (val) => `$${parseFloat(val).toFixed(0)}` },
+      labels: { formatter: (val: any) => `$${parseFloat(val).toFixed(0)}` },
       axisBorder: { show: false },
       axisTicks: { show: false },
       tooltip: { enabled: false }
@@ -53,7 +53,7 @@ export default function RatingVsPriceChart({ data, isLoading }: RatingVsPriceCha
       min: 0,
       max: 5,
       tickAmount: 5,
-      labels: { formatter: (val) => parseFloat(val).toFixed(1) },
+      labels: { formatter: (val: any) => parseFloat(val).toFixed(1) },
     },
     grid: {
       borderColor: "#f1f5f9",

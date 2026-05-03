@@ -100,7 +100,7 @@ export const ProductAnalysisCarousel = () => {
       type: "bar",
       fontFamily: "Outfit, sans-serif",
       toolbar: { show: false },
-      animations: { enabled: true, easing: "easeinout", speed: 500 },
+      animations: { enabled: true, speed: 500 },
     },
     colors: ["#fbbf24"],
     plotOptions: {

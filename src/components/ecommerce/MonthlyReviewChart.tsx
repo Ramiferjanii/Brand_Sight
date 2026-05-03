@@ -66,7 +66,6 @@ export default function MonthlyReviewChart({
       toolbar: { show: false },
       animations: {
         enabled: true,
-        easing: "easeinout",
         speed: 600,
       },
     },
