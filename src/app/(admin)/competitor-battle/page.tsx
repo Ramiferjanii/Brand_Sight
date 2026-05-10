@@ -1,11 +1,9 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ComponentCard from "@/components/common/ComponentCard";
 import api from "@/lib/api";
-import { useProducts } from "@/hooks/useProducts";
 import { useAuth } from "@/context/AuthContext";
-import { BoxCubeIcon, PieChartIcon } from "@/icons";
 import PremiumAlert from "@/components/ui/PremiumAlert";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Navigation, Pagination, EffectCoverflow } from "swiper/modules";
@@ -66,7 +64,34 @@ interface ProductComparison {
 
 export default function CompetitorBattle() {
   const { user } = useAuth();
-  const { products, loading: loadingProducts } = useProducts({ limit: 20 });
+  const [allProducts, setAllProducts] = useState<any[]>([]);
+  const [loadingProducts, setLoadingProducts] = useState(true);
+
+  // Fetch ALL products across all pages for the carousel
+  useEffect(() => {
+    if (!user) return;
+    const fetchAll = async () => {
+      setLoadingProducts(true);
+      try {
+        let page = 1;
+        let fetched: any[] = [];
+        while (true) {
+          const res = await api.get(`/products?page=${page}&limit=50`);
+          const data = res.data;
+          const batch = data.products || [];
+          fetched = [...fetched, ...batch];
+          if (page >= (data.pagination?.totalPages || 1)) break;
+          page++;
+        }
+        setAllProducts(fetched);
+      } catch (err) {
+        console.error('Failed to load products for carousel:', err);
+      } finally {
+        setLoadingProducts(false);
+      }
+    };
+    fetchAll();
+  }, [user]);
   const [searchA, setSearchA] = useState("");
   const [searchB, setSearchB] = useState("");
   const [resultsA, setResultsA] = useState<ProductComparison[]>([]);
@@ -80,6 +105,7 @@ export default function CompetitorBattle() {
     if (n.includes("laptop") || n.includes("portable") || n.includes("notebook")) return "Laptop";
     if (n.includes("casque") || n.includes("headset") || n.includes("buds") || n.includes("écouteurs")) return "Audio";
     if (n.includes("phone") || n.includes("téléphone") || n.includes("smartphone")) return "Smartphone";
+    if (n.includes("tv ") || n.includes("télé") || n.includes("television") || n.startsWith("tv")) return "TV";
     return "Other";
   };
 
@@ -103,6 +129,31 @@ export default function CompetitorBattle() {
       
       const storage = text.match(/(\d+)\s*gb/i) || text.match(/(\d+)\s*go/i);
       specs["Storage"] = storage ? `${storage[1]} GB` : "N/A";
+    } else if (type === "TV") {
+      // Screen size: 43", 50", 55", 65"
+      const size = product.name.match(/(\d{2,3})["''″\s]*(inch|pouces|"|"|'')?/i);
+      specs["Screen Size"] = size ? `${size[1]}"` : "N/A";
+
+      // Resolution
+      if (text.includes("8k")) specs["Resolution"] = "8K";
+      else if (text.includes("4k") || text.includes("uhd")) specs["Resolution"] = "4K UHD";
+      else if (text.includes("full hd") || text.includes("fhd") || text.includes("1080")) specs["Resolution"] = "Full HD";
+      else if (text.includes("hd")) specs["Resolution"] = "HD";
+      else specs["Resolution"] = "N/A";
+
+      // Panel type
+      if (text.includes("oled")) specs["Panel"] = "OLED";
+      else if (text.includes("qled") || text.includes("qled")) specs["Panel"] = "QLED";
+      else if (text.includes("led")) specs["Panel"] = "LED";
+      else specs["Panel"] = "N/A";
+
+      // Smart platform
+      if (text.includes("google tv") || text.includes("google")) specs["Smart Platform"] = "Google TV";
+      else if (text.includes("tizen") || text.includes("samsung")) specs["Smart Platform"] = "Tizen (Samsung)";
+      else if (text.includes("webos") || text.includes("lg")) specs["Smart Platform"] = "webOS (LG)";
+      else if (text.includes("android")) specs["Smart Platform"] = "Android TV";
+      else if (text.includes("smart")) specs["Smart Platform"] = "Smart TV";
+      else specs["Smart Platform"] = "N/A";
     }
     
     return specs;
@@ -206,6 +257,9 @@ export default function CompetitorBattle() {
            grabCursor={true}
            centeredSlides={true}
            slidesPerView={"auto"}
+           preventClicks={false}
+           preventClicksPropagation={false}
+           slideToClickedSlide={true}
            coverflowEffect={{
              rotate: 10,
              stretch: 0,
@@ -225,10 +279,16 @@ export default function CompetitorBattle() {
              1280: { slidesPerView: 5 },
            }}
         >
-          {products.map((product) => (
-             <SwiperSlide key={product.id} className="p-2">
+          {loadingProducts ? (
+            <div className="flex h-40 items-center justify-center text-gray-400">
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-brand-500 border-t-transparent mr-3" />
+              Loading products...
+            </div>
+          ) : allProducts.length === 0 ? (
+            <p className="text-center text-sm text-gray-400 py-10">No products found. Start by scraping some products!</p>
+          ) : allProducts.map((product) => (
+             <SwiperSlide key={product.id} className="p-2" onClick={() => selectFromCarousel(product)}>
                 <div 
-                   onClick={() => selectFromCarousel(product)}
                    className={`cursor-pointer rounded-xl border-2 p-3 transition-all mb-6 ${
                      productA?.id === product.id || productB?.id === product.id 
                      ? "border-brand-500 bg-brand-50/50 dark:bg-brand-500/10"

@@ -22,7 +22,7 @@ const LandingCTAAuthButtons: React.FC = () => {
     <>
       <Link href="/signup" className="w-full sm:w-auto">
         <button className="w-full sm:w-auto h-12 px-8 rounded-lg bg-brand-500 text-white font-bold hover:bg-brand-600 transition-all shadow-lg shadow-brand-500/25">
-          Get Started for Free
+          Start Monitoring Now
         </button>
       </Link>
       <Link href="/signin" className="w-full sm:w-auto">

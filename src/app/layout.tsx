@@ -12,7 +12,7 @@ const outfit = Outfit({
 
 export const metadata = {
   title: "BrandSight",
-  description: "Next.js Admin Dashboard",
+  description: "Real-time brand monitoring and market intelligence platform.",
   icons: {
     icon: "/images/logo/logo-icon.svg",
   },

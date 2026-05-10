@@ -82,17 +82,21 @@ const ScrapingForm: React.FC = () => {
           if (scrapedData.count !== undefined) count = scrapedData.count;
           else if (Array.isArray(scrapedData.data)) count = scrapedData.data.length;
           else if (scrapedData.type === 'single') count = 1;
-          
-          setToast({ 
-            show: true, 
-            type: 'success', 
-            message: 'Scraping completed!', 
-            details: `Found ${count} products from ${website.name}`
-          });
-          setLoading(false);
-          setMessage("");
-          
-          setTimeout(() => setToast(t => ({ ...t, show: false })), 8000);
+          if (count === 0) {
+            setMessage("Error: Échec de l'extraction. Le lien et incorret ou les filtre sont trop strit (0 produit trouvé).");
+            setLoading(false);
+          } else {
+            setToast({ 
+              show: true, 
+              type: 'success', 
+              message: 'Scraping completed!', 
+              details: `Found ${count} products from ${website.name}`
+            });
+            setLoading(false);
+            setMessage("");
+            
+            setTimeout(() => setToast(t => ({ ...t, show: false })), 8000);
+          }
         }
       } catch {
         // Retry
@@ -105,6 +109,18 @@ const ScrapingForm: React.FC = () => {
       setMessage("Please select a website configuration first.");
       return;
     }
+
+    // Validate price range before launching scraper
+    if (minPrice && maxPrice && parseFloat(minPrice) > parseFloat(maxPrice)) {
+      setToast({
+        show: true,
+        type: 'error',
+        message: 'Invalid Price Range',
+        details: `Min price (${minPrice}) cannot be greater than max price (${maxPrice}). Please correct the values.`
+      });
+      return;
+    }
+
     setLoading(true);
     setMessage("");
     setToast({ show: false, type: 'info', message: '' });
@@ -140,6 +156,7 @@ const ScrapingForm: React.FC = () => {
       setLoading(false);
     }
   };
+
 
   return (
     <>

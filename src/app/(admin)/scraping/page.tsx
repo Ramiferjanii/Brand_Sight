@@ -3,7 +3,6 @@ import React from "react";
 import PageBreadCrumb from "@/components/common/PageBreadCrumb";
 import ScrapingForm from "@/components/scraping/ScrapingForm";
 import ScrapingResults from "@/components/scraping/ScrapingResults";
-import ScrapingMetrics from "@/components/scraping/ScrapingMetrics";
 import PageTour, { TourStep } from "@/components/tour/PageTour";
 
 const scrapingTourSteps: TourStep[] = [
@@ -15,14 +14,7 @@ const scrapingTourSteps: TourStep[] = [
     content: "This is where you configure and launch scraping tasks. Let's walk through the key sections.",
     data: { emoji: "🕷️" },
   },
-  {
-    target: "[data-tour='scraping-metrics']",
-    placement: "bottom",
-    disableBeacon: true,
-    title: "Scraping Metrics 📊",
-    content: "At a glance stats: total tasks run, products collected, success rate and active sessions.",
-    data: { emoji: "📊" },
-  },
+
   {
     target: "[data-tour='scraping-form']",
     placement: "right",
@@ -49,9 +41,7 @@ export default function ScrapingPage() {
         <PageTour steps={scrapingTourSteps} />
       </div>
 
-      <div data-tour="scraping-metrics">
-        <ScrapingMetrics />
-      </div>
+
 
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
         <div className="xl:col-span-4" data-tour="scraping-form">

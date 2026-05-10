@@ -25,7 +25,7 @@ const STATIC_FAQS = [
   },
   {
     q: "Why is my scraping job returning 0 results?",
-    a: "Check the Scraping Health page for diagnostics. Common causes: anti-bot protections, site structure changes, or invalid selectors.",
+    a: "Check your selectors and configuration. Common causes: anti-bot protections, site structure changes, or invalid selectors.",
   },
 ];
 
@@ -226,7 +226,6 @@ export default function HelpCenterPage() {
           [
             { label: "Scraping Docs", icon: "🕷️", href: "/scraping" },
             { label: "Market Reports", icon: "📊", href: "/market-reports" },
-            { label: "Scraping Health", icon: "🩺", href: "/scraping-health" },
             { label: "AI Assistant", icon: "✨", href: "#", onClick: openChatbot },
           ] as { label: string; icon: string; href: string; onClick?: () => void }[]
         ).map((item) => (

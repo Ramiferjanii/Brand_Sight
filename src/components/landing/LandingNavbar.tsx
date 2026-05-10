@@ -51,9 +51,6 @@ const LandingNavbar: React.FC = () => {
           <Link href="#how-it-works" className="text-sm font-medium text-gray-600 hover:text-brand-500 dark:text-gray-400 dark:hover:text-brand-400 transition-colors">
             How it Works
           </Link>
-          <Link href="#pricing" className="text-sm font-medium text-gray-600 hover:text-brand-500 dark:text-gray-400 dark:hover:text-brand-400 transition-colors">
-            Pricing
-          </Link>
         </div>
 
         <div className="flex items-center gap-3">

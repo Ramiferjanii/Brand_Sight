@@ -1,11 +1,13 @@
 'use client';
 import React, { useState, useEffect } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Product } from '@/types/product';
 import { ProductCard } from '@/components/products/ProductCard';
 import EmptyState from '@/components/common/EmptyState';
 import ComponentCard from '@/components/common/ComponentCard';
 import Input from '@/components/form/input/InputField';
 import Button from '@/components/ui/button/Button';
+import PremiumAlert from '@/components/ui/PremiumAlert';
 import api from '@/lib/api';
 import PageTour, { TourStep } from '@/components/tour/PageTour';
 import { useAuth } from '@/context/AuthContext';
@@ -44,6 +46,8 @@ export default function ProductsPage() {
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
+    const [availableCategories, setAvailableCategories] = useState<string[]>([]);
+    const [priceError, setPriceError] = useState(false);
     
     // Filters
     const [search, setSearch] = useState('');
@@ -92,10 +96,29 @@ export default function ProductsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [page, user]); // Trigger on page change or user login
 
+    useEffect(() => {
+        const fetchCategories = async () => {
+            if (!user) return;
+            try {
+                const res = await api.get('/products/categories');
+                if (res.data && res.data.categories) {
+                    setAvailableCategories(res.data.categories);
+                }
+            } catch (error) {
+                console.error('Failed to fetch categories:', error);
+            }
+        };
+        fetchCategories();
+    }, [user]);
+
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
+        // Validate price range
+        if (minPrice && maxPrice && parseFloat(minPrice) > parseFloat(maxPrice)) {
+            setPriceError(true);
+            return;
+        }
         setPage(1);
-        // Pass current filter values directly — avoids stale state reads after setPage(1)
         fetchProducts({ page: 1, search, minPrice, maxPrice, category });
     };
 
@@ -158,9 +181,9 @@ export default function ProductsPage() {
                                     className="w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:text-white"
                                 >
                                     <option value="">All Categories</option>
-                                    <option value="Electronics">Electronics</option>
-                                    <option value="Computers">Computers</option>
-                                    <option value="Phones">Phones</option>
+                                    {availableCategories.map((cat, idx) => (
+                                        <option key={idx} value={cat}>{cat}</option>
+                                    ))}
                                 </select>
                             </div>
 
@@ -231,6 +254,30 @@ export default function ProductsPage() {
                     )}
                 </div>
             </div>
+
+            {/* Price Range Error Modal */}
+            <AnimatePresence>
+                {priceError && (
+                    <div className="fixed inset-0 z-[999999] flex items-center justify-center p-4">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setPriceError(false)}
+                            className="absolute inset-0 bg-gray-900/60 backdrop-blur-md"
+                        />
+                        <div className="relative w-full max-w-md">
+                            <PremiumAlert
+                                visible={priceError}
+                                type="error"
+                                title="Invalid Price Range"
+                                message="The minimum price cannot be greater than the maximum price. Please correct the values and try again."
+                                onClose={() => setPriceError(false)}
+                            />
+                        </div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }
