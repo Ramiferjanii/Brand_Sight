@@ -178,11 +178,11 @@ export default function ProductsPage() {
                                 <select 
                                     value={category}
                                     onChange={(e) => setCategory(e.target.value)}
-                                    className="w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:text-white"
+                                    className="w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500 dark:border-gray-700 dark:text-white dark:bg-gray-900"
                                 >
-                                    <option value="">All Categories</option>
+                                    <option value="" className="text-gray-900 bg-white dark:bg-gray-900 dark:text-white">All Categories</option>
                                     {availableCategories.map((cat, idx) => (
-                                        <option key={idx} value={cat}>{cat}</option>
+                                        <option key={idx} value={cat} className="text-gray-900 bg-white dark:bg-gray-900 dark:text-white">{cat}</option>
                                     ))}
                                 </select>
                             </div>

@@ -67,11 +67,17 @@ export default function MarketReports() {
                 <select
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm focus:border-brand-500 focus:outline-none dark:border-gray-800 dark:bg-gray-900"
+                  className="w-full rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm text-gray-900 focus:border-brand-500 focus:outline-none dark:border-gray-800 dark:bg-gray-900 dark:text-white"
                 >
-                  <option value="">-- Select Category --</option>
+                  <option value="" className="text-gray-900 bg-white dark:bg-gray-900 dark:text-white">
+                    -- Select Category --
+                  </option>
                   {categories.map((cat) => (
-                    <option key={cat} value={cat}>
+                    <option
+                      key={cat}
+                      value={cat}
+                      className="text-gray-900 bg-white dark:bg-gray-900 dark:text-white"
+                    >
                       {cat}
                     </option>
                   ))}
